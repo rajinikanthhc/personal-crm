@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Personal CRM</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      color: #1f2937;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
+    .header {
+      height: 70px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 30px;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .logo-subtitle {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    /* =========================
+       SEARCH
+    ========================= */
+
+    .top-search {
+      width: 360px;
+      position: relative;
+    }
+
+    .top-search input {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .top-search input:focus {
+      border-color: #2563eb;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 10px;
+      font-size: 18px;
+    }
+
+    /* =========================
+       LAYOUT
+    ========================= */
+
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 70px);
+    }
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
+    .sidebar {
+      width: 220px;
+      background: white;
+      border-right: 1px solid #e5e7eb;
+      padding: 20px 12px;
+    }
+
+    .menu-item {
+      padding: 13px 15px;
+      margin-bottom: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .menu-item:hover {
+      background: #f3f4f6;
+    }
+
+    .menu-item.active {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* =========================
+       CONTENT
+    ========================= */
+
+    .content {
+      flex: 1;
+      padding: 28px;
+      max-width: 1400px;
+    }
+
+    .page-title {
+      font-size: 25px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .page-subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+
+    /* =========================
+       SUMMARY CARDS
+    ========================= */
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, 220px);
+      gap: 15px;
+      margin-bottom: 28px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .summary-icon {
+      font-size: 24px;
+    }
+
+    .summary-number {
+      font-size: 26px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 3px;
+    }
+
+    /* =========================
+       SECTION
+    ========================= */
+
+    .section {
+      margin-top: 10px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* =========================
+       COMPANY GRID
+    ========================= */
+
+    .company-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .company-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .company-card:hover {
+      border-color: #93c5fd;
+      transform: translateY(-2px);
+    }
+
+    .company-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .company-name {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .company-info {
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .contact-count {
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 13px;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* =========================
+       LOADING
+    ========================= */
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #6b7280;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 800px) {
+
+      .header {
+        padding: 0 15px;
+      }
+
+      .top-search {
+        width: 200px;
+      }
+
+      .sidebar {
+        width: 70px;
+        padding: 15px 8px;
+      }
+
+      .menu-item {
+        text-align: center;
+        font-size: 0;
+      }
+
+      .menu-item::first-letter {
+        font-size: 20px;
+      }
+
+      .content {
+        padding: 20px 15px;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <!-- HEADER -->
+
+  <div class="header">
+
+    <div class="logo">
+
+      <div class="logo-icon">👥</div>
+
+      <div>
+        <div class="logo-title">Personal CRM</div>
+        <div class="logo-subtitle">My Companies & People</div>
+      </div>
+
+    </div>
+
+
+    <div class="top-search">
+
+      <span class="search-icon">🔍</span>
+
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search companies or people..."
+        oninput="searchCRM()"
+      >
+
+    </div>
+
+  </div>
+
+
+  <!-- MAIN LAYOUT -->
+
+  <div class="layout">
+
+
+    <!-- SIDEBAR -->
+
+    <div class="sidebar">
+
+      <div
+        class="menu-item active"
+        onclick="showCompanies()"
+      >
+        🏢 Companies
+      </div>
+
+      <div
+        class="menu-item"
+        onclick="showPeople()"
+      >
+        👤 People
+      </div>
+
+      <div
+        class="menu-item"
+      >
+        ⚙️ Settings
+      </div>
+
+    </div>
+
+
+    <!-- CONTENT -->
+
+    <div class="content" id="content">
+
+      <div class="loading">
+
+        Loading Personal CRM...
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+<script>
+
+  let companies = [];
+  let people = [];
+  let settings = [];
+
+
+  /* =========================================
+     LOAD CRM DATA
+  ========================================= */
+
+  window.onload = function() {
+
+    google.script.run
+      .withSuccessHandler(loadCRM)
+      .withFailureHandler(showError)
+      .getCRMData();
+
+  };
+
+
+  /* =========================================
+     LOAD DATA
+  ========================================= */
+
+  function loadCRM(data) {
+
+    companies = data.companies || [];
+    people = data.people || [];
+    settings = data.settings || {};
+
+    showCompanies();
+
+  }
+
+
+  /* =========================================
+     SHOW COMPANIES
+  ========================================= */
+
+  function showCompanies() {
+
+    setActiveMenu(0);
+
+    let html = `
+
+      <div class="page-title">
+        Companies
+      </div>
+
+      <div class="page-subtitle">
+        Your personal company database
+      </div>
+
+      <div class="summary">
+
+        <div class="summary-card">
+
+          <div class="summary-icon">🏢</div>
+
+          <div class="summary-number">
+            ${companies.length}
+          </div>
+
+          <div class="summary-label">
+            Total Companies
+          </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+          <div class="summary-icon">👤</div>
+
+          <div class="summary-number">
+            ${people.length}
+          </div>
+
+          <div class="summary-label">
+            Total People
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="section">
+
+        <div class="section-header">
+
+          <div class="section-title">
+            Companies
+          </div>
+
+        </div>
+
+        <div
+          class="company-grid"
+          id="companyGrid"
+        >
+
+    `;
+
+
+    companies.forEach(function(company) {
+
+      const companyId = company["Company ID"];
+
+      const companyPeople = people.filter(function(person) {
+
+        return String(person["Company ID"]) === String(companyId);
+
+      });
+
+
+      html += `
+
+        <div
+          class="company-card"
+          onclick="openCompany('${escapeValue(companyId)}')"
+        >
+
+          <div class="company-icon">
+            🏢
+          </div>
+
+          <div class="company-name">
+            ${escapeHTML(company["Company Name"])}
+          </div>
+
+          <div class="company-info">
+
+            ${escapeHTML(company["Company Type"] || "")}
+
+            ${company["Industry"]
+              ? " • " + escapeHTML(company["Industry"])
+              : ""
+            }
+
+            <br>
+
+            ${escapeHTML(company["City"] || "")}
+
+            ${company["State"]
+              ? " • " + escapeHTML(company["State"])
+              : ""
+            }
+
+          </div>
+
+
+          <div class="contact-count">
+
+            👤 ${companyPeople.length} Contact${companyPeople.length === 1 ? "" : "s"}
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    html += `
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    document.getElementById("content").innerHTML = html;
+
+  }
+
+
+  /* =========================================
+     SHOW PEOPLE
+  ========================================= */
+
+  function showPeople() {
+
+    setActiveMenu(1);
+
+    let html = `
+
+      <div class="page-title">
+        People
+      </div>
+
+      <div class="page-subtitle">
+        Your personal contact directory
+      </div>
+
+      <div class="company-grid">
+
+    `;
+
+
+    people.forEach(function(person) {
+
+      html += `
+
+        <div class="company-card">
+
+          <div class="company-icon">
+            👤
+          </div>
+
+          <div class="company-name">
+            ${escapeHTML(person["Contact Name"])}
+          </div>
+
+          <div class="company-info">
+
+            ${escapeHTML(person["Designation"] || "")}
+
+            <br>
+
+            ${escapeHTML(person["Company Name"] || "")}
+
+            <br>
+
+            📞 ${escapeHTML(person["Mobile"] || "")}
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    html += `
+
+      </div>
+
+    `;
+
+
+    document.getElementById("content").innerHTML = html;
+
+  }
+
+
+  /* =========================================
+     OPEN COMPANY
+  ========================================= */
+
+  function openCompany(companyId) {
+
+    const company = companies.find(function(item) {
+
+      return String(item["Company ID"]) === String(companyId);
+
+    });
+
+
+    if (!company) {
+      return;
+    }
+
+
+    const companyPeople = people.filter(function(person) {
+
+      return String(person["Company ID"]) === String(companyId);
+
+    });
+
+
+    let html = `
+
+      <div
+        style="cursor:pointer;color:#2563eb;margin-bottom:20px;"
+        onclick="showCompanies()"
+      >
+        ← Back to Companies
+      </div>
+
+
+      <div class="page-title">
+
+        🏢 ${escapeHTML(company["Company Name"])}
+
+      </div>
+
+
+      <div class="page-subtitle">
+
+        ${escapeHTML(company["Company Type"] || "")}
+
+        ${company["Industry"]
+          ? " • " + escapeHTML(company["Industry"])
+          : ""
+        }
+
+      </div>
+
+
+      <div class="section">
+
+        <div class="section-title">
+          Company Details
+        </div>
+
+        <div class="summary">
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              Location
+            </div>
+
+            <div style="margin-top:8px;font-weight:600;">
+
+              ${escapeHTML(company["City"] || "")},
+              ${escapeHTML(company["State"] || "")}
+
+            </div>
+
+          </div>
+
+
+          <div class="summary-card">
+
+            <div class="summary-label">
+              Business Potential
+            </div>
+
+            <div style="margin-top:8px;font-weight:600;">
+
+              ₹${escapeHTML(company["Business Potential"] || "0")}
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="section">
+
+          <div class="section-header">
+
+            <div class="section-title">
+
+              👤 Contacts (${companyPeople.length})
+
+            </div>
+
+          </div>
+
+
+          <div class="company-grid">
+
+    `;
+
+
+    companyPeople.forEach(function(person) {
+
+      html += `
+
+        <div class="company-card">
+
+          <div class="company-icon">
+            👤
+          </div>
+
+          <div class="company-name">
+
+            ${escapeHTML(person["Contact Name"])}
+
+          </div>
+
+          <div class="company-info">
+
+            ${escapeHTML(person["Designation"] || "")}
+
+            <br>
+
+            ${escapeHTML(person["Department"] || "")}
+
+            <br><br>
+
+            📞 ${escapeHTML(person["Mobile"] || "")}
+
+            <br>
+
+            ✉️ ${escapeHTML(person["Email"] || "")}
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    html += `
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    document.getElementById("content").innerHTML = html;
+
+  }
+
+
+  /* =========================================
+     SEARCH
+  ========================================= */
+
+  function searchCRM() {
+
+    const search = document
+      .getElementById("searchInput")
+      .value
+      .toLowerCase()
+      .trim();
+
+
+    if (!search) {
+
+      showCompanies();
+
+      return;
+
+    }
+
+
+    const matchingCompanies = companies.filter(function(company) {
+
+      return (
+
+        String(company["Company Name"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(company["Industry"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(company["City"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(company["State"] || "")
+          .toLowerCase()
+          .includes(search)
+
+      );
+
+    });
+
+
+    const matchingPeople = people.filter(function(person) {
+
+      return (
+
+        String(person["Contact Name"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(person["Company Name"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(person["Designation"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(person["Department"] || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        String(person["Mobile"] || "")
+          .toLowerCase()
+          .includes(search)
+
+      );
+
+    });
+
+
+    let html = `
+
+      <div class="page-title">
+        Search Results
+      </div>
+
+      <div class="page-subtitle">
+        Results for "${escapeHTML(search)}"
+      </div>
+
+    `;
+
+
+    if (matchingCompanies.length > 0) {
+
+      html += `
+
+        <div class="section">
+
+          <div class="section-title">
+            🏢 Companies (${matchingCompanies.length})
+          </div>
+
+          <br>
+
+          <div class="company-grid">
+
+      `;
+
+
+      matchingCompanies.forEach(function(company) {
+
+        const companyId = company["Company ID"];
+
+        const companyPeople = people.filter(function(person) {
+
+          return String(person["Company ID"]) === String(companyId);
+
+        });
+
+
+        html += `
+
+          <div
+            class="company-card"
+            onclick="openCompany('${escapeValue(companyId)}')"
+          >
+
+            <div class="company-icon">
+              🏢
+            </div>
+
+            <div class="company-name">
+              ${escapeHTML(company["Company Name"])}
+            </div>
+
+            <div class="company-info">
+
+              ${escapeHTML(company["Company Type"] || "")}
+              <br>
+              ${escapeHTML(company["City"] || "")}
+
+            </div>
+
+            <div class="contact-count">
+
+              👤 ${companyPeople.length} Contacts
+
+            </div>
+
+          </div>
+
+        `;
+
+      });
+
+
+      html += `
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+
+    if (matchingPeople.length > 0) {
+
+      html += `
+
+        <div class="section">
+
+          <div class="section-title">
+            👤 People (${matchingPeople.length})
+          </div>
+
+          <br>
+
+          <div class="company-grid">
+
+      `;
+
+
+      matchingPeople.forEach(function(person) {
+
+        html += `
+
+          <div class="company-card">
+
+            <div class="company-icon">
+              👤
+            </div>
+
+            <div class="company-name">
+
+              ${escapeHTML(person["Contact Name"])}
+
+            </div>
+
+            <div class="company-info">
+
+              ${escapeHTML(person["Designation"] || "")}
+
+              <br>
+
+              ${escapeHTML(person["Company Name"] || "")}
+
+              <br>
+
+              📞 ${escapeHTML(person["Mobile"] || "")}
+
+            </div>
+
+          </div>
+
+        `;
+
+      });
+
+
+      html += `
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+
+    if (
+      matchingCompanies.length === 0 &&
+      matchingPeople.length === 0
+    ) {
+
+      html += `
+
+        <div class="loading">
+
+          No companies or people found.
+
+        </div>
+
+      `;
+
+    }
+
+
+    document.getElementById("content").innerHTML = html;
+
+  }
+
+
+  /* =========================================
+     MENU
+  ========================================= */
+
+  function setActiveMenu(index) {
+
+    const items =
+      document.querySelectorAll(".menu-item");
+
+    items.forEach(function(item, i) {
+
+      item.classList.toggle(
+        "active",
+        i === index
+      );
+
+    });
+
+  }
+
+
+  /* =========================================
+     ERROR
+  ========================================= */
+
+  function showError(error) {
+
+    document.getElementById("content").innerHTML = `
+
+      <div class="loading">
+
+        ❌ Unable to load CRM data.
+
+        <br><br>
+
+        ${escapeHTML(error.message || error)}
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* =========================================
+     HTML SECURITY
+  ========================================= */
+
+  function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function escapeValue(value) {
+
+    return String(value || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
+
+  }
+
+</script>
+
+</body>
+
+</html>
