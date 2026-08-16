@@ -1,0 +1,2334 @@
+<script>
+
+let companies = [];
+
+let settings = {};
+
+let editingId = null;
+
+
+/*
+   Current sorting
+*/
+
+let sortColumn =
+  'Company Name';
+
+let sortDirection =
+  'asc';
+
+
+/* =====================================================
+   LOAD
+===================================================== */
+
+window.onload =
+  function() {
+
+    google.script.run
+
+      .withSuccessHandler(
+        function(data) {
+
+          companies =
+            data.companies || [];
+
+          settings =
+            data.settings || {};
+
+          populateSettings();
+
+          renderCompanies();
+
+        }
+      )
+
+      .withFailureHandler(
+        showError
+      )
+
+      .getCRMData();
+
+  };
+
+
+/* =====================================================
+   RENDER COMPANIES
+===================================================== */
+
+function renderCompanies() {
+
+  const searchInput =
+    document.getElementById(
+      'searchInput'
+    );
+
+
+  const search =
+    searchInput
+      ? searchInput.value
+          .toLowerCase()
+          .trim()
+      : '';
+
+
+  let list =
+    companies.filter(
+      function(company) {
+
+        if (!search) {
+          return true;
+        }
+
+
+        return [
+
+          company['Company Name'],
+
+          company['Company Type'],
+
+          company['Industry'],
+
+          company['Area'],
+
+          company['City'],
+
+          company['State'],
+
+          company['Name'],
+
+          company['Designation'],
+
+          company['Phone'],
+
+          company['Email']
+
+        ].some(
+          function(value) {
+
+            return String(
+              value || ''
+            )
+              .toLowerCase()
+              .includes(search);
+
+          }
+        );
+
+      }
+    );
+
+
+  /* ===================================================
+     SORT
+  =================================================== */
+
+  list.sort(
+    function(a, b) {
+
+      const favA =
+        String(
+          a['Favorite'] || ''
+        )
+          .toLowerCase() ===
+        'yes';
+
+
+      const favB =
+        String(
+          b['Favorite'] || ''
+        )
+          .toLowerCase() ===
+        'yes';
+
+
+      /*
+         FAVORITES ALWAYS ON TOP
+      */
+
+      if (
+        favA &&
+        !favB
+      ) {
+        return -1;
+      }
+
+
+      if (
+        !favA &&
+        favB
+      ) {
+        return 1;
+      }
+
+
+      /*
+         If sorting Favorite,
+         sort Yes/No.
+      */
+
+      if (
+        sortColumn ===
+        'Favorite'
+      ) {
+
+        if (
+          favA !== favB
+        ) {
+
+          const result =
+            favA ? 1 : -1;
+
+          return sortDirection === 'asc'
+            ? result
+            : -result;
+
+        }
+
+        return compareValues(
+          a['Company Name'],
+          b['Company Name'],
+          'asc'
+        );
+
+      }
+
+
+      const result =
+        compareValues(
+          a[sortColumn],
+          b[sortColumn],
+          sortDirection
+        );
+
+
+      /*
+         If same value,
+         use Company Name as secondary sort.
+      */
+
+      if (
+        result === 0
+      ) {
+
+        return compareValues(
+          a['Company Name'],
+          b['Company Name'],
+          'asc'
+        );
+
+      }
+
+
+      return result;
+
+    }
+  );
+
+
+  /* ===================================================
+     COUNT
+  =================================================== */
+
+  const count =
+    document.getElementById(
+      'companyCount'
+    );
+
+
+  if (count) {
+
+    count.textContent =
+      list.length +
+      ' compan' +
+      (
+        list.length === 1
+          ? 'y'
+          : 'ies'
+      );
+
+  }
+
+
+  /* ===================================================
+     TABLE
+  =================================================== */
+
+  const tbody =
+    document.getElementById(
+      'companyTable'
+    );
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  if (!list.length) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td
+          colspan="12"
+          class="empty"
+        >
+          No companies found.
+        </td>
+
+      </tr>
+
+    `;
+
+    updateSortArrows();
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    list.map(
+      function(company) {
+
+        const id =
+          escapeAttribute(
+            company['ID']
+          );
+
+
+        const favorite =
+          String(
+            company['Favorite'] || ''
+          )
+            .toLowerCase() ===
+          'yes';
+
+
+        return `
+
+          <tr>
+
+            <td>
+
+              <span
+                class="favorite ${
+                  favorite
+                    ? 'active'
+                    : 'normal'
+                }"
+                onclick="toggleFavorite('${id}')"
+                title="Favorite"
+              >
+                ${
+                  favorite
+                    ? '★'
+                    : '☆'
+                }
+              </span>
+
+            </td>
+
+
+            <td>
+
+              <strong>
+
+                ${
+                  escapeHTML(
+                    company['Company Name']
+                  )
+                }
+
+              </strong>
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['Company Type']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['Industry']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['Area']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['City']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['State']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              <span
+                class="contact-link"
+                onclick="openContact('${id}')"
+              >
+
+                ${
+                  escapeHTML(
+                    company['Name']
+                  )
+                }
+
+              </span>
+
+            </td>
+
+
+            <td>
+
+              ${
+                escapeHTML(
+                  company['Designation']
+                )
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                company['Phone']
+                  ? `
+                    <a
+                      class="phone-link"
+                      href="tel:${escapeAttribute(
+                        company['Phone']
+                      )}"
+                    >
+                      ${
+                        escapeHTML(
+                          company['Phone']
+                        )
+                      }
+                    </a>
+                  `
+                  : ''
+              }
+
+            </td>
+
+
+            <td>
+
+              ${
+                company['Email']
+                  ? `
+                    <a
+                      class="email-link"
+                      href="mailto:${escapeAttribute(
+                        company['Email']
+                      )}"
+                    >
+                      ${
+                        escapeHTML(
+                          company['Email']
+                        )
+                      }
+                    </a>
+                  `
+                  : ''
+              }
+
+            </td>
+
+
+            <td class="action">
+
+              <button
+                class="edit-btn"
+                onclick="toggleMenu('${id}')"
+                title="Edit / Delete"
+              >
+                ✏️
+              </button>
+
+
+              <div
+                id="menu-${id}"
+                class="menu"
+              >
+
+                <div
+                  onclick="editCompany('${id}')"
+                >
+                  ✏️ Edit
+                </div>
+
+
+                <div
+                  onclick="deleteCompany('${id}')"
+                >
+                  🗑️ Delete
+                </div>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        `;
+
+      }
+    )
+    .join('');
+
+
+  updateSortArrows();
+
+}
+
+
+/* =====================================================
+   SORT
+===================================================== */
+
+function sortCompanies(
+  column
+) {
+
+  if (
+    sortColumn === column
+  ) {
+
+    sortDirection =
+      sortDirection === 'asc'
+        ? 'desc'
+        : 'asc';
+
+  }
+
+  else {
+
+    sortColumn =
+      column;
+
+    sortDirection =
+      'asc';
+
+  }
+
+
+  renderCompanies();
+
+}
+
+
+/* =====================================================
+   COMPARE VALUES
+===================================================== */
+
+function compareValues(
+  valueA,
+  valueB,
+  direction
+) {
+
+  const a =
+    String(
+      valueA || ''
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const b =
+    String(
+      valueB || ''
+    )
+      .trim()
+      .toLowerCase();
+
+
+  let result =
+    a.localeCompare(
+      b,
+      undefined,
+      {
+        numeric: true,
+        sensitivity: 'base'
+      }
+    );
+
+
+  if (
+    direction === 'desc'
+  ) {
+
+    result =
+      -result;
+
+  }
+
+
+  return result;
+
+}
+
+
+/* =====================================================
+   SORT ARROWS
+===================================================== */
+
+function updateSortArrows() {
+
+  const ids = [
+
+    'Favorite',
+    'CompanyName',
+    'CompanyType',
+    'Industry',
+    'Area',
+    'City',
+    'State',
+    'Name',
+    'Designation',
+    'Phone',
+    'Email'
+
+  ];
+
+
+  ids.forEach(
+    function(id) {
+
+      const element =
+        document.getElementById(
+          'sort-' + id
+        );
+
+
+      if (element) {
+
+        element.textContent =
+          '';
+
+      }
+
+    }
+  );
+
+
+  let elementId =
+    'sort-' +
+    sortColumn
+      .replace(
+        'Company Name',
+        'CompanyName'
+      )
+      .replace(
+        'Company Type',
+        'CompanyType'
+      );
+
+
+  const element =
+    document.getElementById(
+      elementId
+    );
+
+
+  if (element) {
+
+    element.textContent =
+      sortDirection === 'asc'
+        ? '▲'
+        : '▼';
+
+  }
+
+}
+
+
+/* =====================================================
+   FAVORITE
+===================================================== */
+
+function toggleFavorite(
+  id
+) {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(result) {
+
+        const company =
+          companies.find(
+            function(c) {
+
+              return String(
+                c['ID']
+              ) ===
+              String(id);
+
+            }
+          );
+
+
+        if (company) {
+
+          company['Favorite'] =
+            result.favorite;
+
+        }
+
+
+        renderCompanies();
+
+      }
+    )
+
+    .withFailureHandler(
+      showError
+    )
+
+    .toggleFavorite(id);
+
+}
+
+
+/* =====================================================
+   MENU
+===================================================== */
+
+function toggleMenu(
+  id
+) {
+
+  document
+    .querySelectorAll(
+      '.menu'
+    )
+    .forEach(
+      function(menu) {
+
+        menu.classList.remove(
+          'show'
+        );
+
+      }
+    );
+
+
+  const menu =
+    document.getElementById(
+      'menu-' + id
+    );
+
+
+  if (menu) {
+
+    menu.classList.add(
+      'show'
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CLOSE MENUS WHEN CLICKING ELSEWHERE
+===================================================== */
+
+document.addEventListener(
+  'click',
+  function(event) {
+
+    if (
+      event.target.closest(
+        '.edit-btn'
+      ) ||
+      event.target.closest(
+        '.menu'
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    document
+      .querySelectorAll(
+        '.menu'
+      )
+      .forEach(
+        function(menu) {
+
+          menu.classList.remove(
+            'show'
+          );
+
+        }
+      );
+
+  }
+);
+
+
+/* =====================================================
+   ADD
+===================================================== */
+
+function openAddModal() {
+
+  editingId =
+    null;
+
+
+  document.getElementById(
+    'formTitle'
+  ).textContent =
+    'Add Company';
+
+
+  clearForm();
+
+
+  document.getElementById(
+    'formModal'
+  ).classList.add(
+    'show'
+  );
+
+}
+
+
+/* =====================================================
+   EDIT
+===================================================== */
+
+function editCompany(
+  id
+) {
+
+  const company =
+    companies.find(
+      function(c) {
+
+        return String(
+          c['ID']
+        ) ===
+        String(id);
+
+      }
+    );
+
+
+  if (!company) {
+    return;
+  }
+
+
+  editingId =
+    id;
+
+
+  document.getElementById(
+    'formTitle'
+  ).textContent =
+    'Edit Company';
+
+
+  setValue(
+    'fCompanyName',
+    company['Company Name']
+  );
+
+
+  setValue(
+    'fCompanyType',
+    company['Company Type']
+  );
+
+
+  setValue(
+    'fIndustry',
+    company['Industry']
+  );
+
+
+  setValue(
+    'fArea',
+    company['Area']
+  );
+
+
+  setValue(
+    'fCity',
+    company['City']
+  );
+
+
+  setValue(
+    'fState',
+    company['State']
+  );
+
+
+  setValue(
+    'fWebsite',
+    company['Website']
+  );
+
+
+  setValue(
+    'fName',
+    company['Name']
+  );
+
+
+  setValue(
+    'fDesignation',
+    company['Designation']
+  );
+
+
+  setValue(
+    'fPhone',
+    company['Phone']
+  );
+
+
+  setValue(
+    'fEmail',
+    company['Email']
+  );
+
+
+  setValue(
+    'fDecisionMaker',
+    company['Decision Maker']
+  );
+
+
+  setValue(
+    'fPreferredContact',
+    company['Preferred Contact']
+  );
+
+
+  setValue(
+    'fFavorite',
+    company['Favorite'] ||
+    'No'
+  );
+
+
+  const photoInput =
+    document.getElementById(
+      'fPhoto'
+    );
+
+
+  photoInput.value =
+    '';
+
+
+  const preview =
+    document.getElementById(
+      'photoPreview'
+    );
+
+
+  if (
+    company['Photo']
+  ) {
+
+    /*
+       Load existing image
+       through Apps Script.
+    */
+
+    preview.style.display =
+      'block';
+
+    preview.src =
+      '';
+
+
+    google.script.run
+
+      .withSuccessHandler(
+        function(url) {
+
+          if (
+            url
+          ) {
+
+            preview.src =
+              url;
+
+          }
+          else {
+
+            preview.style.display =
+              'none';
+
+          }
+
+        }
+      )
+
+      .withFailureHandler(
+        function() {
+
+          preview.style.display =
+            'none';
+
+        }
+      )
+
+      .getVisitingCardUrl(
+        company['Photo']
+      );
+
+  }
+
+  else {
+
+    preview.src =
+      '';
+
+    preview.style.display =
+      'none';
+
+  }
+
+
+  document.getElementById(
+    'formModal'
+  ).classList.add(
+    'show'
+  );
+
+}
+
+
+/* =====================================================
+   SAVE COMPANY
+===================================================== */
+
+function saveCompany() {
+
+  /*
+     IMPORTANT:
+     Capture every form value immediately,
+     before FileReader starts.
+  */
+
+  const company = {
+
+    'Company Name':
+      getValue(
+        'fCompanyName'
+      ),
+
+    'Company Type':
+      getValue(
+        'fCompanyType'
+      ),
+
+    'Industry':
+      getValue(
+        'fIndustry'
+      ),
+
+    'Area':
+      getValue(
+        'fArea'
+      ),
+
+    'City':
+      getValue(
+        'fCity'
+      ),
+
+    'State':
+      getValue(
+        'fState'
+      ),
+
+    'Website':
+      getValue(
+        'fWebsite'
+      ),
+
+    'Name':
+      getValue(
+        'fName'
+      ),
+
+    'Designation':
+      getValue(
+        'fDesignation'
+      ),
+
+    'Phone':
+      getValue(
+        'fPhone'
+      ),
+
+    'Email':
+      getValue(
+        'fEmail'
+      ),
+
+    'Decision Maker':
+      getValue(
+        'fDecisionMaker'
+      ),
+
+    'Preferred Contact':
+      getValue(
+        'fPreferredContact'
+      ),
+
+    'Favorite':
+      getValue(
+        'fFavorite'
+      )
+
+  };
+
+
+  /*
+     Make an independent copy.
+     This guarantees the object doesn't
+     change while image is being read.
+  */
+
+  const savedCompany =
+    JSON.parse(
+      JSON.stringify(
+        company
+      )
+    );
+
+
+  if (
+    !String(
+      savedCompany['Company Name'] ||
+      ''
+    ).trim()
+  ) {
+
+    alert(
+      'Please enter Company Name.'
+    );
+
+    return;
+
+  }
+
+
+  const file =
+    document.getElementById(
+      'fPhoto'
+    ).files[0];
+
+
+  if (file) {
+
+    const reader =
+      new FileReader();
+
+
+    reader.onload =
+      function(event) {
+
+        const result =
+          event.target.result;
+
+
+        const parts =
+          result.split(',');
+
+
+        const base64 =
+          parts.length > 1
+            ? parts[1]
+            : '';
+
+
+        if (!base64) {
+
+          alert(
+            'Unable to read the visiting card image.'
+          );
+
+          return;
+
+        }
+
+
+        saveToServer(
+          savedCompany,
+          {
+
+            base64:
+              base64,
+
+            mimeType:
+              file.type
+
+          }
+        );
+
+      };
+
+
+    reader.onerror =
+      function() {
+
+        alert(
+          'Unable to read the visiting card image.'
+        );
+
+      };
+
+
+    reader.readAsDataURL(
+      file
+    );
+
+  }
+
+  else {
+
+    saveToServer(
+      savedCompany,
+      null
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   SERVER SAVE
+===================================================== */
+
+function saveToServer(
+  company,
+  imageData
+) {
+
+  /*
+     Make another independent copy
+     before sending to Apps Script.
+  */
+
+  const data =
+    JSON.parse(
+      JSON.stringify(
+        company
+      )
+    );
+
+
+  if (editingId) {
+
+    data['ID'] =
+      editingId;
+
+
+    const existing =
+      companies.find(
+        function(c) {
+
+          return String(
+            c['ID']
+          ) ===
+          String(editingId);
+
+        }
+      );
+
+
+    /*
+       Preserve existing Photo when
+       no new photo is selected.
+    */
+
+    if (
+      existing
+    ) {
+
+      data['Photo'] =
+        existing['Photo'] ||
+        '';
+
+    }
+
+
+    google.script.run
+
+      .withSuccessHandler(
+        function() {
+
+          closeFormModal();
+
+          reloadData();
+
+        }
+      )
+
+      .withFailureHandler(
+        showError
+      )
+
+      .updateCompany(
+        data,
+        imageData
+      );
+
+  }
+
+  else {
+
+    google.script.run
+
+      .withSuccessHandler(
+        function() {
+
+          closeFormModal();
+
+          reloadData();
+
+        }
+      )
+
+      .withFailureHandler(
+        showError
+      )
+
+      .addCompany(
+        data,
+        imageData
+      );
+
+  }
+
+}
+
+
+/* =====================================================
+   DELETE
+===================================================== */
+
+function deleteCompany(
+  id
+) {
+
+  const company =
+    companies.find(
+      function(c) {
+
+        return String(
+          c['ID']
+        ) ===
+        String(id);
+
+      }
+    );
+
+
+  if (!company) {
+    return;
+  }
+
+
+  const name =
+    company['Company Name'] ||
+    'this company';
+
+
+  const confirmed =
+    confirm(
+      'Delete ' +
+      name +
+      '?\n\n' +
+      'This will also remove its visiting card image.'
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function() {
+
+        reloadData();
+
+      }
+    )
+
+    .withFailureHandler(
+      showError
+    )
+
+    .deleteCompany(
+      id
+    );
+
+}
+
+
+/* =====================================================
+   CONTACT DETAILS
+===================================================== */
+
+function openContact(
+  id
+) {
+
+  const company =
+    companies.find(
+      function(c) {
+
+        return String(
+          c['ID']
+        ) ===
+        String(id);
+
+      }
+    );
+
+
+  if (!company) {
+    return;
+  }
+
+
+  const content =
+    document.getElementById(
+      'contactContent'
+    );
+
+
+  let html = `
+
+    <div class="contact-name">
+
+      ${
+        escapeHTML(
+          company['Name'] ||
+          'No Contact Name'
+        )
+      }
+
+    </div>
+
+
+    <div class="contact-company">
+
+      ${
+        escapeHTML(
+          company['Designation'] ||
+          ''
+        )
+      }
+
+      ${
+        company['Designation']
+          ? ' • '
+          : ''
+      }
+
+      ${
+        escapeHTML(
+          company['Company Name'] ||
+          ''
+        )
+      }
+
+    </div>
+
+
+    <div
+      id="visitingCardArea"
+      class="visiting-card-area"
+    >
+
+      ${
+        company['Photo']
+          ? `
+            <div class="photo-loading">
+              Loading visiting card...
+            </div>
+          `
+          : ''
+      }
+
+    </div>
+
+
+    ${detail(
+      'Company Type',
+      company['Company Type']
+    )}
+
+
+    ${detail(
+      'Industry',
+      company['Industry']
+    )}
+
+
+    ${detail(
+      'Area',
+      company['Area']
+    )}
+
+
+    ${detail(
+      'City',
+      company['City']
+    )}
+
+
+    ${detail(
+      'State',
+      company['State']
+    )}
+
+
+    ${detail(
+      'Phone',
+      company['Phone']
+    )}
+
+
+    ${detail(
+      'Email',
+      company['Email']
+    )}
+
+
+    ${detail(
+      'Decision Maker',
+      company['Decision Maker']
+    )}
+
+
+    ${detail(
+      'Preferred Contact',
+      company['Preferred Contact']
+    )}
+
+
+    <div class="contact-actions">
+
+      ${
+        company['Phone']
+          ? `
+
+            <a
+              href="tel:${escapeAttribute(
+                company['Phone']
+              )}"
+            >
+              📞 Call
+            </a>
+
+
+            <a
+              href="https://wa.me/${cleanPhone(
+                company['Phone']
+              )}"
+              target="_blank"
+            >
+              💬 WhatsApp
+            </a>
+
+          `
+          : ''
+      }
+
+
+      ${
+        company['Email']
+          ? `
+
+            <a
+              href="mailto:${escapeAttribute(
+                company['Email']
+              )}"
+            >
+              ✉️ Email
+            </a>
+
+          `
+          : ''
+      }
+
+
+      ${
+        company['Website']
+          ? `
+
+            <a
+              href="${normaliseWebsite(
+                company['Website']
+              )}"
+              target="_blank"
+            >
+              🌐 Website
+            </a>
+
+          `
+          : ''
+      }
+
+    </div>
+
+  `;
+
+
+  content.innerHTML =
+    html;
+
+
+  document.getElementById(
+    'contactModal'
+  ).classList.add(
+    'show'
+  );
+
+
+  /*
+     Load visiting card.
+  */
+
+  if (
+    company['Photo']
+  ) {
+
+    google.script.run
+
+      .withSuccessHandler(
+        function(photoUrl) {
+
+          const area =
+            document.getElementById(
+              'visitingCardArea'
+            );
+
+
+          if (!area) {
+            return;
+          }
+
+
+          if (photoUrl) {
+
+            area.innerHTML = `
+
+              <div class="visiting-card-title">
+                Visiting Card
+              </div>
+
+
+              <img
+                class="card-image"
+                src="${escapeAttribute(
+                  photoUrl
+                )}"
+                alt="Visiting Card"
+                onclick="openCardImage('${escapeAttribute(
+                  photoUrl
+                )}')"
+                onerror="showNoPhoto(this)"
+              >
+
+            `;
+
+          }
+
+          else {
+
+            area.innerHTML =
+              '';
+
+          }
+
+        }
+      )
+
+      .withFailureHandler(
+        function() {
+
+          const area =
+            document.getElementById(
+              'visitingCardArea'
+            );
+
+
+          if (area) {
+
+            area.innerHTML =
+              '';
+
+          }
+
+        }
+      )
+
+      .getVisitingCardUrl(
+        company['Photo']
+      );
+
+  }
+
+}
+
+
+/* =====================================================
+   OPEN VISITING CARD
+===================================================== */
+
+function openCardImage(
+  url
+) {
+
+  if (!url) {
+    return;
+  }
+
+
+  window.open(
+    url,
+    '_blank'
+  );
+
+}
+
+
+/* =====================================================
+   PHOTO ERROR
+===================================================== */
+
+function showNoPhoto(
+  image
+) {
+
+  const area =
+    image.closest(
+      '.visiting-card-area'
+    );
+
+
+  if (area) {
+
+    area.innerHTML =
+      '';
+
+  }
+
+}
+
+
+/* =====================================================
+   DETAIL
+===================================================== */
+
+function detail(
+  label,
+  value
+) {
+
+  if (
+    value === '' ||
+    value === null ||
+    value === undefined
+  ) {
+
+    return '';
+
+  }
+
+
+  return `
+
+    <div class="detail-row">
+
+      <div class="detail-label">
+
+        ${
+          escapeHTML(
+            label
+          )
+        }
+
+      </div>
+
+
+      <div class="detail-value">
+
+        ${
+          escapeHTML(
+            value
+          )
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   SETTINGS DROPDOWNS
+===================================================== */
+
+function populateSettings() {
+
+  createSelect(
+    'fCompanyType',
+    settings['Company Type']
+  );
+
+
+  createSelect(
+    'fIndustry',
+    settings['Industry']
+  );
+
+
+  createSelect(
+    'fArea',
+    settings['Area']
+  );
+
+
+  createSelect(
+    'fCity',
+    settings['City']
+  );
+
+
+  createSelect(
+    'fState',
+    settings['State']
+  );
+
+
+  createSelect(
+    'fDesignation',
+    settings['Designation']
+  );
+
+
+  createSelect(
+    'fDecisionMaker',
+    settings['Decision Maker']
+  );
+
+
+  createSelect(
+    'fPreferredContact',
+    settings['Preferred Contact']
+  );
+
+}
+
+
+/* =====================================================
+   CREATE SELECT
+===================================================== */
+
+function createSelect(
+  id,
+  values
+) {
+
+  const select =
+    document.getElementById(
+      id
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  select.innerHTML =
+    '<option value="">Select</option>';
+
+
+  (
+    values || []
+  ).forEach(
+    function(value) {
+
+      const option =
+        document.createElement(
+          'option'
+        );
+
+
+      option.value =
+        value;
+
+
+      option.textContent =
+        value;
+
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   PHOTO PREVIEW
+===================================================== */
+
+function previewPhoto() {
+
+  const input =
+    document.getElementById(
+      'fPhoto'
+    );
+
+
+  const file =
+    input.files[0];
+
+
+  const image =
+    document.getElementById(
+      'photoPreview'
+    );
+
+
+  if (!file) {
+
+    image.src =
+      '';
+
+    image.style.display =
+      'none';
+
+    return;
+
+  }
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    function(event) {
+
+      image.src =
+        event.target.result;
+
+      image.style.display =
+        'block';
+
+    };
+
+
+  reader.readAsDataURL(
+    file
+  );
+
+}
+
+
+/* =====================================================
+   RELOAD
+===================================================== */
+
+function reloadData() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(data) {
+
+        companies =
+          data.companies || [];
+
+        settings =
+          data.settings || {};
+
+        populateSettings();
+
+        renderCompanies();
+
+      }
+    )
+
+    .withFailureHandler(
+      showError
+    )
+
+    .getCRMData();
+
+}
+
+
+/* =====================================================
+   CLEAR FORM
+===================================================== */
+
+function clearForm() {
+
+  [
+
+    'fCompanyName',
+    'fWebsite',
+    'fName',
+    'fPhone',
+    'fEmail'
+
+  ].forEach(
+    function(id) {
+
+      document.getElementById(
+        id
+      ).value =
+        '';
+
+    }
+  );
+
+
+  [
+
+    'fCompanyType',
+    'fIndustry',
+    'fArea',
+    'fCity',
+    'fState',
+    'fDesignation',
+    'fDecisionMaker',
+    'fPreferredContact'
+
+  ].forEach(
+    function(id) {
+
+      document.getElementById(
+        id
+      ).value =
+        '';
+
+    }
+  );
+
+
+  document.getElementById(
+    'fFavorite'
+  ).value =
+    'No';
+
+
+  document.getElementById(
+    'fPhoto'
+  ).value =
+    '';
+
+
+  const preview =
+    document.getElementById(
+      'photoPreview'
+    );
+
+
+  preview.src =
+    '';
+
+  preview.style.display =
+    'none';
+
+}
+
+
+/* =====================================================
+   CLOSE FORM MODAL
+===================================================== */
+
+function closeFormModal() {
+
+  document.getElementById(
+    'formModal'
+  ).classList.remove(
+    'show'
+  );
+
+}
+
+
+/* =====================================================
+   CLOSE CONTACT MODAL
+===================================================== */
+
+function closeContactModal() {
+
+  document.getElementById(
+    'contactModal'
+  ).classList.remove(
+    'show'
+  );
+
+}
+
+
+/* =====================================================
+   GET VALUE
+===================================================== */
+
+function getValue(
+  id
+) {
+
+  const element =
+    document.getElementById(
+      id
+    );
+
+
+  if (!element) {
+    return '';
+  }
+
+
+  return element.value;
+
+}
+
+
+/* =====================================================
+   SET VALUE
+===================================================== */
+
+function setValue(
+  id,
+  value
+) {
+
+  const element =
+    document.getElementById(
+      id
+    );
+
+
+  if (!element) {
+    return;
+  }
+
+
+  element.value =
+    value === null ||
+    value === undefined
+      ? ''
+      : value;
+
+}
+
+
+/* =====================================================
+   CLEAN PHONE
+===================================================== */
+
+function cleanPhone(
+  phone
+) {
+
+  return String(
+    phone || ''
+  )
+    .replace(
+      /\D/g,
+      ''
+    );
+
+}
+
+
+/* =====================================================
+   WEBSITE
+===================================================== */
+
+function normaliseWebsite(
+  url
+) {
+
+  url =
+    String(
+      url || ''
+    ).trim();
+
+
+  if (!url) {
+    return '';
+  }
+
+
+  if (
+    !url.match(
+      /^https?:\/\//i
+    )
+  ) {
+
+    return (
+      'https://' +
+      url
+    );
+
+  }
+
+
+  return url;
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(
+  value
+) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    return '';
+
+  }
+
+
+  return String(value)
+
+    .replace(
+      /&/g,
+      '&amp;'
+    )
+
+    .replace(
+      /</g,
+      '&lt;'
+    )
+
+    .replace(
+      />/g,
+      '&gt;'
+    )
+
+    .replace(
+      /"/g,
+      '&quot;'
+    )
+
+    .replace(
+      /'/g,
+      '&#039;'
+    );
+
+}
+
+
+/* =====================================================
+   ESCAPE ATTRIBUTE
+===================================================== */
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHTML(
+    value
+  );
+
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+function showError(
+  error
+) {
+
+  alert(
+    error &&
+    error.message
+      ? error.message
+      : error
+  );
+
+}
+
+</script>
