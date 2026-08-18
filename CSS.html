@@ -931,4 +931,64 @@ tr:hover td {
 
 }
 
+/* =====================================================
+   LOADING OVERLAY
+===================================================== */
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.72);
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 1;
+  visibility: visible;
+
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+
+.loading-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   LOADING SPINNER
+===================================================== */
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+
+  border: 4px solid #dbe5f7;
+  border-top-color: #2563eb;
+
+  border-radius: 50%;
+
+  animation:
+    crmSpin 0.8s linear infinite;
+}
+
+
+@keyframes crmSpin {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
 </style>

@@ -162,49 +162,21 @@ function openMasterPage(
 
 /* =========================================================
    LOAD MASTER VALUES
+   LOAD FROM ALREADY LOADED CRM DATA
 ========================================================= */
 
 function loadMasterValues() {
 
-  const table =
-    document.getElementById(
-      'masterTable'
-    );
-
-
-  table.innerHTML =
-
-    '<tr>' +
-
-      '<td colspan="3" class="loading">' +
-        'Loading...' +
-      '</td>' +
-
-    '</tr>';
-
-
-  google.script.run
-
-    .withSuccessHandler(
-      function(values) {
-
-        renderMasterValues(
-          values || []
-        );
-
-      }
-    )
-
-    .withFailureHandler(
-      showError
-    )
-
-    .getMasterValues(
+  const values =
+    crmData.settings[
       currentMasterField
-    );
+    ] || [];
+
+  renderMasterValues(
+    values
+  );
 
 }
-
 
 /* =========================================================
    RENDER MASTER VALUES
@@ -936,6 +908,8 @@ function setupEvents() {
 
 function loadCRM() {
 
+  showLoading();
+
   showTableLoading();
 
   google.script.run
@@ -958,17 +932,24 @@ function loadCRM() {
 
         renderCompanies();
 
+        hideLoading();
+
       }
     )
 
     .withFailureHandler(
-      showError
+      function(error) {
+
+        hideLoading();
+
+        showError(error);
+
+      }
     )
 
     .getCRMData();
 
 }
-
 
 /* =========================================================
    SETTINGS
@@ -2383,6 +2364,10 @@ function openAddCompany() {
   ).textContent =
     'Save';
 
+    document.getElementById(
+  'companySaveButton'
+).disabled =
+  false;
 
   showModal(
     'companyFormModal'
@@ -2435,6 +2420,11 @@ function openEditCompany(
     'companySaveButton'
   ).textContent =
     'Save Changes';
+
+    document.getElementById(
+  'companySaveButton'
+).disabled =
+  false;
 
 
   document.getElementById(
@@ -3236,6 +3226,14 @@ function openEditPerson(
   ).textContent =
     'Save Changes';
 
+    document.getElementById(
+  'personSaveButton'
+).disabled =
+  false;
+
+hideModal(
+  'personDetailsModal'
+);
 
   showModal(
     'personFormModal'
@@ -3245,7 +3243,7 @@ function openEditPerson(
 
 
 /* =========================================================
-   SAVE PERSON
+   SAVE PERSON  
 ========================================================= */
 
 async function savePerson() {
@@ -3480,6 +3478,8 @@ function deletePerson(
 
 function refreshCRM() {
 
+  showLoading();
+
   google.script.run
 
     .withSuccessHandler(
@@ -3500,6 +3500,8 @@ function refreshCRM() {
 
         renderCompanies();
 
+        hideLoading();
+
 
         if (
           currentCompanyId
@@ -3515,13 +3517,18 @@ function refreshCRM() {
     )
 
     .withFailureHandler(
-      showError
+      function(error) {
+
+        hideLoading();
+
+        showError(error);
+
+      }
     )
 
     .getCRMData();
 
 }
-
 
 /* =========================================================
    PERSON DETAILS
@@ -4265,6 +4272,45 @@ function showToast(
     },
     2200
   );
+
+}
+
+/* =========================================================
+   LOADING SCREEN
+========================================================= */
+
+function showLoading() {
+
+  const overlay =
+    document.getElementById(
+      'loadingOverlay'
+    );
+
+  if (overlay) {
+
+    overlay.classList.remove(
+      'hidden'
+    );
+
+  }
+
+}
+
+
+function hideLoading() {
+
+  const overlay =
+    document.getElementById(
+      'loadingOverlay'
+    );
+
+  if (overlay) {
+
+    overlay.classList.add(
+      'hidden'
+    );
+
+  }
 
 }
 
