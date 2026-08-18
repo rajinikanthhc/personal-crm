@@ -35,6 +35,646 @@ let editingPersonId =
 let currentCompanyId =
   null;
 
+/* =========================================================
+   CURRENT PAGE
+========================================================= */
+
+let currentPage =
+  'companies';
+
+let currentMasterField =
+  '';
+
+let editingMasterValue =
+  null;
+
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+function showPage(page) {
+
+  currentPage =
+    page;
+
+
+  /*
+     Update navigation buttons
+  */
+
+  document
+    .querySelectorAll('.nav-btn')
+    .forEach(function(button) {
+
+      button.classList.toggle(
+        'active',
+        button.dataset.page === page
+      );
+
+    });
+
+
+  /*
+     Hide all pages
+  */
+
+  document
+    .querySelectorAll('.page')
+    .forEach(function(element) {
+
+      element.classList.remove(
+        'active'
+      );
+
+    });
+
+
+  /*
+     Companies page
+  */
+
+  if (page === 'companies') {
+
+    document
+      .getElementById('companiesPage')
+      .classList.add('active');
+
+    document
+      .getElementById('companyHeaderActions')
+      .style.display = 'flex';
+
+    return;
+
+  }
+
+
+  /*
+     Master page
+  */
+
+  document
+    .getElementById('masterPage')
+    .classList.add('active');
+
+  document
+    .getElementById('companyHeaderActions')
+    .style.display = 'none';
+
+
+  openMasterPage(
+    page
+  );
+
+}
+
+
+/* =========================================================
+   OPEN MASTER PAGE
+========================================================= */
+
+function openMasterPage(
+  field
+) {
+
+  currentMasterField =
+    field;
+
+  editingMasterValue =
+    null;
+
+
+  document.getElementById(
+    'masterTitle'
+  ).textContent =
+    field;
+
+
+  document.getElementById(
+    'masterValueLabel'
+  ).textContent =
+    field;
+
+
+  loadMasterValues();
+
+}
+
+
+/* =========================================================
+   LOAD MASTER VALUES
+========================================================= */
+
+function loadMasterValues() {
+
+  const table =
+    document.getElementById(
+      'masterTable'
+    );
+
+
+  table.innerHTML =
+
+    '<tr>' +
+
+      '<td colspan="3" class="loading">' +
+        'Loading...' +
+      '</td>' +
+
+    '</tr>';
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(values) {
+
+        renderMasterValues(
+          values || []
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      showError
+    )
+
+    .getMasterValues(
+      currentMasterField
+    );
+
+}
+
+
+/* =========================================================
+   RENDER MASTER VALUES
+========================================================= */
+
+function renderMasterValues(
+  values
+) {
+
+  values =
+    values.slice().sort(
+      function(a, b) {
+
+        return String(a)
+          .localeCompare(
+            String(b),
+            undefined,
+            {
+              sensitivity: 'base'
+            }
+          );
+
+      }
+    );
+
+
+  document.getElementById(
+    'masterCount'
+  ).textContent =
+
+    values.length +
+    (
+      values.length === 1
+        ? ' value'
+        : ' values'
+    );
+
+
+  const table =
+    document.getElementById(
+      'masterTable'
+    );
+
+
+  if (!values.length) {
+
+    table.innerHTML =
+
+      '<tr>' +
+
+        '<td colspan="3" class="empty">' +
+          'No values available.' +
+        '</td>' +
+
+      '</tr>';
+
+    return;
+
+  }
+
+
+  table.innerHTML =
+    values
+      .map(function(value, index) {
+
+        return (
+
+          '<tr>' +
+
+            '<td>' +
+              (index + 1) +
+            '</td>' +
+
+            '<td>' +
+              escapeHtml(value) +
+            '</td>' +
+
+            '<td>' +
+
+              '<div class="master-actions">' +
+
+                '<button ' +
+                  'class="master-action-btn" ' +
+                  'title="Edit" ' +
+                  'data-master-edit="' +
+                    escapeAttr(value) +
+                  '">' +
+                  '✏️' +
+                '</button>' +
+
+                '<button ' +
+                  'class="master-action-btn" ' +
+                  'title="Delete" ' +
+                  'data-master-delete="' +
+                    escapeAttr(value) +
+                  '">' +
+                  '🗑️' +
+                '</button>' +
+
+              '</div>' +
+
+            '</td>' +
+
+          '</tr>'
+
+        );
+
+      })
+      .join('');
+
+}
+
+
+/* =========================================================
+   MASTER TABLE CLICK
+========================================================= */
+
+function handleMasterTableClick(
+  event
+) {
+
+  const edit =
+    event.target.closest(
+      '[data-master-edit]'
+    );
+
+
+  if (edit) {
+
+    editMasterValue(
+      edit.dataset.masterEdit
+    );
+
+    return;
+
+  }
+
+
+  const remove =
+    event.target.closest(
+      '[data-master-delete]'
+    );
+
+
+  if (remove) {
+
+    deleteMasterValue(
+      remove.dataset.masterDelete
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ADD MASTER
+========================================================= */
+
+function openMasterAdd() {
+
+  editingMasterValue =
+    null;
+
+
+  document.getElementById(
+    'masterFormTitle'
+  ).textContent =
+    'Add ' +
+    currentMasterField;
+
+
+  document.getElementById(
+    'masterValueInput'
+  ).value =
+    '';
+
+
+  showModal(
+    'masterFormModal'
+  );
+
+
+  setTimeout(
+    function() {
+
+      document
+        .getElementById(
+          'masterValueInput'
+        )
+        .focus();
+
+    },
+    100
+  );
+
+}
+
+
+/* =========================================================
+   EDIT MASTER
+========================================================= */
+
+function editMasterValue(
+  value
+) {
+
+  editingMasterValue =
+    value;
+
+
+  document.getElementById(
+    'masterFormTitle'
+  ).textContent =
+    'Edit ' +
+    currentMasterField;
+
+
+  document.getElementById(
+    'masterValueInput'
+  ).value =
+    value;
+
+
+  showModal(
+    'masterFormModal'
+  );
+
+
+  setTimeout(
+    function() {
+
+      const input =
+        document.getElementById(
+          'masterValueInput'
+        );
+
+      input.focus();
+      input.select();
+
+    },
+    100
+  );
+
+}
+
+
+/* =========================================================
+   SAVE MASTER
+========================================================= */
+
+function saveMasterValue() {
+
+  const button =
+    document.getElementById(
+      'masterSaveButton'
+    );
+
+
+  const value =
+    document
+      .getElementById(
+        'masterValueInput'
+      )
+      .value
+      .trim();
+
+
+  if (!value) {
+
+    alert(
+      'Please enter a value.'
+    );
+
+    return;
+
+  }
+
+
+  button.disabled =
+    true;
+
+
+  /*
+     ADD
+  */
+
+  if (
+    editingMasterValue === null
+  ) {
+
+    google.script.run
+
+      .withSuccessHandler(
+        function() {
+
+          button.disabled =
+            false;
+
+          closeMasterForm();
+
+          loadMasterValues();
+
+          refreshSettingsOnly();
+
+          showToast(
+            currentMasterField +
+            ' added successfully.'
+          );
+
+        }
+      )
+
+      .withFailureHandler(
+        function(error) {
+
+          button.disabled =
+            false;
+
+          showError(error);
+
+        }
+      )
+
+      .addMasterValue(
+        currentMasterField,
+        value
+      );
+
+    return;
+
+  }
+
+
+  /*
+     EDIT
+  */
+
+  google.script.run
+
+    .withSuccessHandler(
+      function() {
+
+        button.disabled =
+          false;
+
+        closeMasterForm();
+
+        loadMasterValues();
+
+        refreshSettingsOnly();
+
+        showToast(
+          currentMasterField +
+          ' updated successfully.'
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      function(error) {
+
+        button.disabled =
+          false;
+
+        showError(error);
+
+      }
+    )
+
+    .updateMasterValue(
+      currentMasterField,
+      editingMasterValue,
+      value
+    );
+
+}
+
+
+/* =========================================================
+   DELETE MASTER
+========================================================= */
+
+function deleteMasterValue(
+  value
+) {
+
+  const confirmed =
+    confirm(
+      'Delete "' +
+      value +
+      '" from ' +
+      currentMasterField +
+      '?'
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  google.script.run
+
+    .withSuccessHandler(
+      function() {
+
+        loadMasterValues();
+
+        refreshSettingsOnly();
+
+        showToast(
+          currentMasterField +
+          ' deleted successfully.'
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      showError
+    )
+
+    .deleteMasterValue(
+      currentMasterField,
+      value
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE MASTER FORM
+========================================================= */
+
+function closeMasterForm() {
+
+  hideModal(
+    'masterFormModal'
+  );
+
+  editingMasterValue =
+    null;
+
+}
+
+
+/* =========================================================
+   REFRESH SETTINGS ONLY
+========================================================= */
+
+function refreshSettingsOnly() {
+
+  google.script.run
+
+    .withSuccessHandler(
+      function(settings) {
+
+        crmData.settings =
+          settings || {};
+
+        populateSettings();
+
+      }
+    )
+
+    .getSettings();
+
+}
 
 /* =========================================================
    PAGE LOAD
@@ -225,6 +865,36 @@ function setupEvents() {
       handleTableClick
     );
 
+      document
+    .getElementById('masterFormCloseButton')
+    .addEventListener(
+      'click',
+      closeMasterForm
+    );
+
+
+  document
+    .getElementById('masterCancelButton')
+    .addEventListener(
+      'click',
+      closeMasterForm
+    );
+
+
+  document
+    .getElementById('masterSaveButton')
+    .addEventListener(
+      'click',
+      saveMasterValue
+    );
+
+
+  document
+    .getElementById('masterTable')
+    .addEventListener(
+      'click',
+      handleMasterTableClick
+    );
 
   document
     .getElementById('companyContacts')
@@ -232,7 +902,7 @@ function setupEvents() {
       'click',
       handlePeopleClick
     );
-
+    showPage('companies');
 
   document
     .querySelectorAll('.modal-bg')

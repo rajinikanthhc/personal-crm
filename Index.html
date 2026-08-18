@@ -31,7 +31,75 @@
   </div>
 
 
-  <div class="header-actions">
+  <!-- ===================================================
+       NAVIGATION
+  ==================================================== -->
+
+  <nav class="main-nav">
+
+    <button
+      class="nav-btn active"
+      data-page="companies"
+      onclick="showPage('companies')"
+    >
+      Companies
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="Company Type"
+      onclick="showPage('Company Type')"
+    >
+      Company Type
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="Industry"
+      onclick="showPage('Industry')"
+    >
+      Industry
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="Area"
+      onclick="showPage('Area')"
+    >
+      Area
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="City"
+      onclick="showPage('City')"
+    >
+      City
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="State"
+      onclick="showPage('State')"
+    >
+      State
+    </button>
+
+    <button
+      class="nav-btn"
+      data-page="Designation"
+      onclick="showPage('Designation')"
+    >
+      Designation
+    </button>
+
+  </nav>
+
+
+  <div
+    id="companyHeaderActions"
+    class="header-actions"
+  >
 
     <div class="search-wrap">
 
@@ -71,10 +139,13 @@
 
 
 <!-- =====================================================
-     MAIN
+     COMPANIES PAGE
 ===================================================== -->
 
-<main class="container">
+<main
+  id="companiesPage"
+  class="container page"
+>
 
 
   <div class="page-header">
@@ -97,10 +168,6 @@
   </div>
 
 
-  <!-- ===================================================
-       COMPANY TABLE
-  ==================================================== -->
-
   <div class="table-wrap">
 
     <table>
@@ -113,7 +180,6 @@
             ★
           </th>
 
-
           <th
             class="sortable"
             data-sort="Company Name"
@@ -121,7 +187,6 @@
             Company Name
             <span id="sort-CompanyName"></span>
           </th>
-
 
           <th
             class="sortable"
@@ -131,7 +196,6 @@
             <span id="sort-CompanyType"></span>
           </th>
 
-
           <th
             class="sortable"
             data-sort="Industry"
@@ -139,7 +203,6 @@
             Industry
             <span id="sort-Industry"></span>
           </th>
-
 
           <th
             class="sortable"
@@ -149,7 +212,6 @@
             <span id="sort-Area"></span>
           </th>
 
-
           <th
             class="sortable"
             data-sort="City"
@@ -157,7 +219,6 @@
             City
             <span id="sort-City"></span>
           </th>
-
 
           <th
             class="sortable"
@@ -167,7 +228,6 @@
             <span id="sort-State"></span>
           </th>
 
-
           <th
             class="sortable"
             data-sort="Contacts"
@@ -176,11 +236,9 @@
             <span id="sort-Contacts"></span>
           </th>
 
-
           <th>
             Website
           </th>
-
 
           <th class="action-column">
             Actions
@@ -211,6 +269,154 @@
   </div>
 
 </main>
+
+
+<!-- =====================================================
+     MASTER PAGE
+===================================================== -->
+
+<main
+  id="masterPage"
+  class="master-page page"
+>
+
+
+  <div class="master-page-header">
+
+    <div>
+
+      <h1 id="masterTitle">
+        Company Type
+      </h1>
+
+      <div
+        id="masterCount"
+        class="count"
+      >
+        0 values
+      </div>
+
+    </div>
+
+
+    <button
+      id="masterAddButton"
+      class="add-btn"
+      type="button"
+      onclick="openMasterAdd()"
+    >
+      + Add
+    </button>
+
+  </div>
+
+
+  <div class="master-table-wrap">
+
+    <table class="master-table">
+
+      <thead>
+
+        <tr>
+
+          <th>
+            #
+          </th>
+
+          <th>
+            Value
+          </th>
+
+          <th class="master-action-column">
+            Actions
+          </th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody id="masterTable">
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</main>
+
+
+<!-- =====================================================
+     MASTER FORM MODAL
+===================================================== -->
+
+<div
+  id="masterFormModal"
+  class="modal-bg"
+>
+
+  <div class="modal master-form-modal">
+
+    <div class="modal-header">
+
+      <div
+        id="masterFormTitle"
+        class="modal-title"
+      >
+        Add
+      </div>
+
+
+      <button
+        id="masterFormCloseButton"
+        class="close"
+        type="button"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <div class="field">
+
+      <label id="masterValueLabel">
+        Value
+      </label>
+
+      <input
+        id="masterValueInput"
+        type="text"
+      >
+
+    </div>
+
+
+    <div class="modal-actions">
+
+      <button
+        id="masterCancelButton"
+        class="cancel-btn"
+        type="button"
+      >
+        Cancel
+      </button>
+
+
+      <button
+        id="masterSaveButton"
+        class="save-btn"
+        type="button"
+      >
+        Save
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 
 
 <!-- =====================================================
@@ -247,7 +453,6 @@
           id="companyFavoriteButton"
           class="favorite-modal"
           type="button"
-          title="Favorite"
         >
           ☆
         </button>
@@ -256,7 +461,6 @@
           id="companyEditButton"
           class="icon-button"
           type="button"
-          title="Edit company"
         >
           ✏️
         </button>
@@ -282,13 +486,16 @@
     <div class="section-header">
 
       <h2>
+
         Contacts
+
         <span
           id="contactCount"
           class="section-count"
         >
           (0)
         </span>
+
       </h2>
 
 
@@ -330,7 +537,6 @@
         Contact Details
       </div>
 
-
       <button
         id="personDetailsCloseButton"
         class="close"
@@ -370,7 +576,6 @@
       >
         Add Company
       </div>
-
 
       <button
         id="companyFormCloseButton"
@@ -500,13 +705,8 @@
 
       </div>
 
-
     </div>
 
-
-    <!-- =================================================
-         FIRST CONTACT
-    ================================================== -->
 
     <div
       id="firstContactSection"
@@ -523,7 +723,6 @@
 
 
       <div class="form-grid">
-
 
         <div class="field">
 
@@ -600,7 +799,6 @@
 
         </div>
 
-
       </div>
 
     </div>
@@ -615,7 +813,6 @@
       >
         Cancel
       </button>
-
 
       <button
         id="companySaveButton"
@@ -652,7 +849,6 @@
         Add Contact
       </div>
 
-
       <button
         id="personFormCloseButton"
         class="close"
@@ -665,7 +861,6 @@
 
 
     <div class="form-grid">
-
 
       <div class="field full">
 
@@ -742,7 +937,6 @@
 
       </div>
 
-
     </div>
 
 
@@ -755,7 +949,6 @@
       >
         Cancel
       </button>
-
 
       <button
         id="personSaveButton"

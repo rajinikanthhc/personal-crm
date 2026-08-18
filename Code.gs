@@ -1,6 +1,6 @@
 /* =========================================================
    PERSONAL CRM
-   BACKEND - FRESH VERSION
+   BACKEND - V1.2
 ========================================================= */
 
 
@@ -56,9 +56,7 @@ function getCompaniesSheet() {
       .getSheetByName('Companies Sheet');
 
   if (!sheet) {
-    throw new Error(
-      'Companies Sheet not found.'
-    );
+    throw new Error('Companies Sheet not found.');
   }
 
   return sheet;
@@ -73,9 +71,7 @@ function getPeopleSheet() {
       .getSheetByName('People Sheet');
 
   if (!sheet) {
-    throw new Error(
-      'People Sheet not found.'
-    );
+    throw new Error('People Sheet not found.');
   }
 
   return sheet;
@@ -90,9 +86,7 @@ function getSettingsSheet() {
       .getSheetByName('Settings');
 
   if (!sheet) {
-    throw new Error(
-      'Settings sheet not found.'
-    );
+    throw new Error('Settings sheet not found.');
   }
 
   return sheet;
@@ -152,7 +146,7 @@ function sheetToObjects(sheet) {
 
 
 /* =========================================================
-   GET SHEET HEADERS
+   GET HEADERS
 ========================================================= */
 
 function getHeaders(sheet) {
@@ -272,7 +266,7 @@ function getSettings() {
 
 
 /* =========================================================
-   GET COMPLETE CRM DATA
+   COMPLETE CRM DATA
 ========================================================= */
 
 function getCRMData() {
@@ -289,6 +283,472 @@ function getCRMData() {
       getSettings()
 
   };
+
+}
+
+
+/* =========================================================
+   MASTER FIELDS
+========================================================= */
+
+const MASTER_FIELDS = [
+
+  'Company Type',
+  'Industry',
+  'Area',
+  'City',
+  'State',
+  'Designation'
+
+];
+
+
+/* =========================================================
+   GET MASTER VALUES
+========================================================= */
+
+function getMasterValues(field) {
+
+  if (
+    MASTER_FIELDS.indexOf(field) === -1
+  ) {
+
+    throw new Error(
+      'Invalid master field.'
+    );
+
+  }
+
+  const sheet =
+    getSettingsSheet();
+
+  const headers =
+    getHeaders(sheet);
+
+  const columnIndex =
+    headers.indexOf(field);
+
+  if (columnIndex === -1) {
+
+    throw new Error(
+      field +
+      ' column not found in Settings sheet.'
+    );
+
+  }
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+    return [];
+  }
+
+  const values =
+    sheet
+      .getRange(
+        2,
+        columnIndex + 1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+  return values
+    .map(function(row) {
+
+      return String(
+        row[0] || ''
+      ).trim();
+
+    })
+    .filter(function(value) {
+
+      return value !== '';
+
+    });
+
+}
+
+
+/* =========================================================
+   ADD MASTER VALUE
+========================================================= */
+
+function addMasterValue(
+  field,
+  value
+) {
+
+  if (
+    MASTER_FIELDS.indexOf(field) === -1
+  ) {
+
+    throw new Error(
+      'Invalid master field.'
+    );
+
+  }
+
+  const newValue =
+    String(
+      value || ''
+    ).trim();
+
+  if (!newValue) {
+
+    throw new Error(
+      'Please enter a value.'
+    );
+
+  }
+
+  const existing =
+    getMasterValues(field);
+
+  const duplicate =
+    existing.some(function(item) {
+
+      return (
+        item.toLowerCase() ===
+        newValue.toLowerCase()
+      );
+
+    });
+
+  if (duplicate) {
+
+    throw new Error(
+      '"' +
+      newValue +
+      '" already exists.'
+    );
+
+  }
+
+  const sheet =
+    getSettingsSheet();
+
+  const headers =
+    getHeaders(sheet);
+
+  const columnIndex =
+    headers.indexOf(field);
+
+  if (columnIndex === -1) {
+
+    throw new Error(
+      field +
+      ' column not found.'
+    );
+
+  }
+
+
+  /*
+     Find first empty cell.
+  */
+
+  const lastRow =
+    Math.max(
+      sheet.getLastRow(),
+      2
+    );
+
+  const values =
+    sheet
+      .getRange(
+        2,
+        columnIndex + 1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+  let targetRow =
+    -1;
+
+  for (
+    let i = 0;
+    i < values.length;
+    i++
+  ) {
+
+    if (
+      String(
+        values[i][0] || ''
+      ).trim() === ''
+    ) {
+
+      targetRow =
+        i + 2;
+
+      break;
+
+    }
+
+  }
+
+
+  if (targetRow === -1) {
+
+    targetRow =
+      sheet.getLastRow() + 1;
+
+  }
+
+
+  sheet
+    .getRange(
+      targetRow,
+      columnIndex + 1
+    )
+    .setValue(
+      newValue
+    );
+
+
+  return {
+    success: true
+  };
+
+}
+
+
+/* =========================================================
+   UPDATE MASTER VALUE
+========================================================= */
+
+function updateMasterValue(
+  field,
+  oldValue,
+  newValue
+) {
+
+  if (
+    MASTER_FIELDS.indexOf(field) === -1
+  ) {
+
+    throw new Error(
+      'Invalid master field.'
+    );
+
+  }
+
+  const oldText =
+    String(
+      oldValue || ''
+    ).trim();
+
+  const newText =
+    String(
+      newValue || ''
+    ).trim();
+
+  if (!newText) {
+
+    throw new Error(
+      'Please enter a value.'
+    );
+
+  }
+
+  const existing =
+    getMasterValues(field);
+
+  const duplicate =
+    existing.some(function(item) {
+
+      return (
+        item.toLowerCase() ===
+        newText.toLowerCase() &&
+        item.toLowerCase() !==
+        oldText.toLowerCase()
+      );
+
+    });
+
+  if (duplicate) {
+
+    throw new Error(
+      '"' +
+      newText +
+      '" already exists.'
+    );
+
+  }
+
+  const sheet =
+    getSettingsSheet();
+
+  const headers =
+    getHeaders(sheet);
+
+  const columnIndex =
+    headers.indexOf(field);
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+
+    throw new Error(
+      'Value not found.'
+    );
+
+  }
+
+  const values =
+    sheet
+      .getRange(
+        2,
+        columnIndex + 1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+
+  for (
+    let i = 0;
+    i < values.length;
+    i++
+  ) {
+
+    const current =
+      String(
+        values[i][0] || ''
+      ).trim();
+
+    if (
+      current.toLowerCase() ===
+      oldText.toLowerCase()
+    ) {
+
+      sheet
+        .getRange(
+          i + 2,
+          columnIndex + 1
+        )
+        .setValue(
+          newText
+        );
+
+      return {
+        success: true
+      };
+
+    }
+
+  }
+
+
+  throw new Error(
+    '"' +
+    oldText +
+    '" not found.'
+  );
+
+}
+
+
+/* =========================================================
+   DELETE MASTER VALUE
+========================================================= */
+
+function deleteMasterValue(
+  field,
+  value
+) {
+
+  if (
+    MASTER_FIELDS.indexOf(field) === -1
+  ) {
+
+    throw new Error(
+      'Invalid master field.'
+    );
+
+  }
+
+  const text =
+    String(
+      value || ''
+    ).trim();
+
+  const sheet =
+    getSettingsSheet();
+
+  const headers =
+    getHeaders(sheet);
+
+  const columnIndex =
+    headers.indexOf(field);
+
+  const lastRow =
+    sheet.getLastRow();
+
+  if (lastRow < 2) {
+
+    throw new Error(
+      'Value not found.'
+    );
+
+  }
+
+  const values =
+    sheet
+      .getRange(
+        2,
+        columnIndex + 1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+
+  for (
+    let i = 0;
+    i < values.length;
+    i++
+  ) {
+
+    const current =
+      String(
+        values[i][0] || ''
+      ).trim();
+
+    if (
+      current.toLowerCase() ===
+      text.toLowerCase()
+    ) {
+
+      /*
+         Clear only the setting cell.
+         Never delete the complete row.
+      */
+
+      sheet
+        .getRange(
+          i + 2,
+          columnIndex + 1
+        )
+        .clearContent();
+
+      return {
+        success: true
+      };
+
+    }
+
+  }
+
+
+  throw new Error(
+    '"' +
+    text +
+    '" not found.'
+  );
 
 }
 
@@ -477,11 +937,8 @@ function addCompany(company) {
   sheet.appendRow(row);
 
   return {
-
     success: true,
-
     id: companyId
-
   };
 
 }
@@ -546,9 +1003,7 @@ function updateCompany(company) {
     .setValues([row]);
 
   return {
-
     success: true
-
   };
 
 }
@@ -580,9 +1035,6 @@ function deleteCompany(companyId) {
 
     });
 
-  /*
-     Delete visiting card images
-  */
 
   companyPeople.forEach(function(person) {
 
@@ -613,11 +1065,6 @@ function deleteCompany(companyId) {
   });
 
 
-  /*
-     Delete people rows
-     from bottom to top
-  */
-
   const peopleRows = [];
 
   companyPeople.forEach(function(person) {
@@ -634,6 +1081,7 @@ function deleteCompany(companyId) {
 
   });
 
+
   peopleRows
     .sort(function(a, b) {
       return b - a;
@@ -644,10 +1092,6 @@ function deleteCompany(companyId) {
 
     });
 
-
-  /*
-     Delete company
-  */
 
   const companyRow =
     findRowById(
@@ -669,9 +1113,7 @@ function deleteCompany(companyId) {
 
 
   return {
-
     success: true
-
   };
 
 }
@@ -739,12 +1181,8 @@ function toggleFavorite(companyId) {
   );
 
   return {
-
     success: true,
-
-    favorite:
-      newValue
-
+    favorite: newValue
   };
 
 }
@@ -792,18 +1230,12 @@ function addPerson(
   let photoName = '';
 
 
-  /*
-     Upload visiting card
-  */
-
   if (
     imageData &&
     imageData.base64
   ) {
 
-    if (
-      !person['Name']
-    ) {
+    if (!person['Name']) {
 
       throw new Error(
         'Contact name is required for photo upload.'
@@ -828,20 +1260,12 @@ function addPerson(
         return personId;
       }
 
-      if (
-        header === 'Company ID'
-      ) {
-
+      if (header === 'Company ID') {
         return companyId;
-
       }
 
-      if (
-        header === 'Photo'
-      ) {
-
+      if (header === 'Photo') {
         return photoName;
-
       }
 
       return (
@@ -854,11 +1278,8 @@ function addPerson(
   sheet.appendRow(row);
 
   return {
-
     success: true,
-
     id: personId
-
   };
 
 }
@@ -923,18 +1344,12 @@ function updatePerson(
     oldPhoto;
 
 
-  /*
-     Upload replacement photo
-  */
-
   if (
     imageData &&
     imageData.base64
   ) {
 
-    if (
-      !person['Name']
-    ) {
+    if (!person['Name']) {
 
       throw new Error(
         'Contact name is required for photo upload.'
@@ -974,6 +1389,7 @@ function updatePerson(
 
     });
 
+
   sheet
     .getRange(
       rowNumber,
@@ -983,11 +1399,6 @@ function updatePerson(
     )
     .setValues([row]);
 
-
-  /*
-     Remove old image if
-     a replacement was uploaded
-  */
 
   if (
     imageData &&
@@ -1015,9 +1426,7 @@ function updatePerson(
 
 
   return {
-
     success: true
-
   };
 
 }
@@ -1099,9 +1508,7 @@ function deletePerson(
   );
 
   return {
-
     success: true
-
   };
 
 }
