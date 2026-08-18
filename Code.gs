@@ -1254,27 +1254,43 @@ function addPerson(
 
 
   const row =
-    headers.map(function(header) {
+  headers.map(function(header) {
 
-      if (header === 'ID') {
-        return personId;
-      }
+    if (header === 'ID') {
 
-      if (header === 'Company ID') {
-        return companyId;
-      }
+      return personId;
 
-      if (header === 'Photo') {
-        return photoName;
-      }
+    }
 
-      return (
-        person[header] ||
-        ''
-      );
 
-    });
+    if (header === 'Company ID') {
 
+      return companyId;
+
+    }
+
+
+    if (header === 'Company') {
+
+      return company['Company Name'] || '';
+
+    }
+
+
+    if (header === 'Photo') {
+
+      return photoName;
+
+    }
+
+
+    return (
+      person[header] ||
+      ''
+    );
+
+  });
+  
   sheet.appendRow(row);
 
   return {

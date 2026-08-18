@@ -1553,12 +1553,6 @@ function renderCompanyRow(
         ) +
       '</td>' +
 
-
-      '<td>' +
-        contactsHtml +
-      '</td>' +
-
-
       '<td>' +
         websiteHtml +
       '</td>' +
@@ -1692,7 +1686,6 @@ function handleTableClick(
 
 }
 
-
 /* =========================================================
    PEOPLE CLICK
 ========================================================= */
@@ -1700,6 +1693,54 @@ function handleTableClick(
 function handlePeopleClick(
   event
 ) {
+
+  /* ================================
+     EDIT CONTACT
+  ================================= */
+
+  const edit =
+    event.target.closest(
+      '.edit-person'
+    );
+
+  if (edit) {
+
+    event.stopPropagation();
+
+    openEditPerson(
+      edit.dataset.personId
+    );
+
+    return;
+
+  }
+
+
+  /* ================================
+     DELETE CONTACT
+  ================================= */
+
+  const remove =
+    event.target.closest(
+      '.delete-person'
+    );
+
+  if (remove) {
+
+    event.stopPropagation();
+
+    deletePerson(
+      remove.dataset.personId
+    );
+
+    return;
+
+  }
+
+
+  /* ================================
+     OPEN CONTACT DETAILS
+  ================================= */
 
   const person =
     event.target.closest(
@@ -1716,38 +1757,7 @@ function handlePeopleClick(
 
   }
 
-
-  const edit =
-    event.target.closest(
-      '.edit-person'
-    );
-
-  if (edit) {
-
-    openEditPerson(
-      edit.dataset.personId
-    );
-
-    return;
-
-  }
-
-
-  const remove =
-    event.target.closest(
-      '.delete-person'
-    );
-
-  if (remove) {
-
-    deletePerson(
-      remove.dataset.personId
-    );
-
-  }
-
 }
-
 
 /* =========================================================
    SORT
@@ -1806,9 +1816,6 @@ function updateSortArrows() {
 
     'State':
       'sort-State',
-
-    'Contacts':
-      'sort-Contacts'
 
   };
 
