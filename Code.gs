@@ -1,6 +1,6 @@
 /* =========================================================
    PERSONAL CRM
-   BACKEND
+   BACKEND - FRESH VERSION
 ========================================================= */
 
 
@@ -22,7 +22,7 @@ function doGet() {
 
 
 /* =========================================================
-   INCLUDE FILE
+   INCLUDE HTML FILE
 ========================================================= */
 
 function include(filename) {
@@ -46,21 +46,53 @@ function getSpreadsheet() {
 
 
 /* =========================================================
-   COMPANIES SHEET
+   SHEETS
 ========================================================= */
 
 function getCompaniesSheet() {
 
   const sheet =
     getSpreadsheet()
-      .getSheetByName('Companies');
+      .getSheetByName('Companies Sheet');
 
   if (!sheet) {
-
     throw new Error(
-      'Companies sheet not found.'
+      'Companies Sheet not found.'
     );
+  }
 
+  return sheet;
+
+}
+
+
+function getPeopleSheet() {
+
+  const sheet =
+    getSpreadsheet()
+      .getSheetByName('People Sheet');
+
+  if (!sheet) {
+    throw new Error(
+      'People Sheet not found.'
+    );
+  }
+
+  return sheet;
+
+}
+
+
+function getSettingsSheet() {
+
+  const sheet =
+    getSpreadsheet()
+      .getSheetByName('Settings');
+
+  if (!sheet) {
+    throw new Error(
+      'Settings sheet not found.'
+    );
   }
 
   return sheet;
@@ -69,18 +101,15 @@ function getCompaniesSheet() {
 
 
 /* =========================================================
-   GET COMPANIES
+   GENERIC SHEET DATA
 ========================================================= */
 
-function getCompanies() {
-
-  const sheet =
-    getCompaniesSheet();
+function sheetToObjects(sheet) {
 
   const values =
     sheet.getDataRange().getValues();
 
-  if (values.length <= 1) {
+  if (!values.length) {
     return [];
   }
 
@@ -89,27 +118,33 @@ function getCompanies() {
 
   return values
     .slice(1)
-    .filter(row =>
-      row.some(value => value !== '')
-    )
-    .map(row => {
+    .filter(function(row) {
 
-      const company = {};
+      return row.some(function(value) {
 
-      headers.forEach(
-        (header, index) => {
+        return value !== '' &&
+               value !== null &&
+               value !== undefined;
 
-          if (!header) {
-            return;
-          }
+      });
 
-          company[header] =
+    })
+    .map(function(row) {
+
+      const object = {};
+
+      headers.forEach(function(header, index) {
+
+        if (header) {
+
+          object[String(header)] =
             row[index];
 
         }
-      );
 
-      return company;
+      });
+
+      return object;
 
     });
 
@@ -117,153 +152,10 @@ function getCompanies() {
 
 
 /* =========================================================
-   GET SETTINGS
+   GET SHEET HEADERS
 ========================================================= */
 
-function getSettings() {
-
-  const sheet =
-    getSpreadsheet()
-      .getSheetByName('Settings');
-
-  if (!sheet) {
-
-    throw new Error(
-      'Settings sheet not found.'
-    );
-
-  }
-
-  const values =
-    sheet.getDataRange().getValues();
-
-  if (values.length <= 1) {
-    return {};
-  }
-
-  const headers =
-    values[0];
-
-  const result = {};
-
-  headers.forEach(
-    (header, columnIndex) => {
-
-      if (!header) {
-        return;
-      }
-
-      result[header] = [];
-
-      for (
-        let rowIndex = 1;
-        rowIndex < values.length;
-        rowIndex++
-      ) {
-
-        const value =
-          values[rowIndex][columnIndex];
-
-        if (
-          value !== '' &&
-          value !== null &&
-          value !== undefined
-        ) {
-
-          result[header]
-            .push(String(value));
-
-        }
-
-      }
-
-    }
-  );
-
-  return result;
-
-}
-
-
-/* =========================================================
-   GET ALL CRM DATA
-========================================================= */
-
-function getCRMData() {
-
-  return {
-
-    companies:
-      getCompanies(),
-
-    settings:
-      getSettings()
-
-  };
-
-}
-
-
-/* =========================================================
-   GENERATE LOWEST AVAILABLE ID
-========================================================= */
-
-function getNextCompanyId() {
-
-  const companies =
-    getCompanies();
-
-  const usedNumbers = [];
-
-  companies.forEach(
-    company => {
-
-      const id =
-        String(
-          company['ID'] || ''
-        );
-
-      const match =
-        id.match(/^C(\d+)$/i);
-
-      if (match) {
-
-        usedNumbers.push(
-          Number(match[1])
-        );
-
-      }
-
-    }
-  );
-
-  let number = 1;
-
-  while (
-    usedNumbers.includes(number)
-  ) {
-
-    number++;
-
-  }
-
-  return (
-    'C' +
-    String(number)
-      .padStart(3, '0')
-  );
-
-}
-
-
-/* =========================================================
-   GET HEADERS
-========================================================= */
-
-function getCompanyHeaders() {
-
-  const sheet =
-    getCompaniesSheet();
+function getHeaders(sheet) {
 
   return sheet
     .getRange(
@@ -278,23 +170,237 @@ function getCompanyHeaders() {
 
 
 /* =========================================================
+   COMPANIES
+========================================================= */
+
+function getCompanies() {
+
+  return sheetToObjects(
+    getCompaniesSheet()
+  );
+
+}
+
+
+/* =========================================================
+   PEOPLE
+========================================================= */
+
+function getPeople() {
+
+  const people =
+    sheetToObjects(
+      getPeopleSheet()
+    );
+
+  return people.map(function(person) {
+
+    const photo =
+      String(
+        person['Photo'] || ''
+      ).trim();
+
+    person.photoUrl =
+      photo
+        ? getVisitingCardUrl(photo)
+        : '';
+
+    return person;
+
+  });
+
+}
+
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+
+function getSettings() {
+
+  const sheet =
+    getSettingsSheet();
+
+  const values =
+    sheet.getDataRange().getValues();
+
+  if (!values.length) {
+    return {};
+  }
+
+  const headers =
+    values[0];
+
+  const result = {};
+
+  headers.forEach(function(header, columnIndex) {
+
+    if (!header) {
+      return;
+    }
+
+    result[String(header)] = [];
+
+    for (
+      let row = 1;
+      row < values.length;
+      row++
+    ) {
+
+      const value =
+        values[row][columnIndex];
+
+      if (
+        value !== '' &&
+        value !== null &&
+        value !== undefined
+      ) {
+
+        result[String(header)].push(
+          String(value)
+        );
+
+      }
+
+    }
+
+  });
+
+  return result;
+
+}
+
+
+/* =========================================================
+   GET COMPLETE CRM DATA
+========================================================= */
+
+function getCRMData() {
+
+  return {
+
+    companies:
+      getCompanies(),
+
+    people:
+      getPeople(),
+
+    settings:
+      getSettings()
+
+  };
+
+}
+
+
+/* =========================================================
+   LOWEST AVAILABLE COMPANY ID
+========================================================= */
+
+function getNextCompanyId() {
+
+  const companies =
+    getCompanies();
+
+  const used = {};
+
+  companies.forEach(function(company) {
+
+    const id =
+      String(
+        company['ID'] || ''
+      ).trim();
+
+    const match =
+      id.match(/^C(\d+)$/i);
+
+    if (match) {
+
+      used[
+        Number(match[1])
+      ] = true;
+
+    }
+
+  });
+
+  let number = 1;
+
+  while (used[number]) {
+    number++;
+  }
+
+  return (
+    'C' +
+    String(number).padStart(3, '0')
+  );
+
+}
+
+
+/* =========================================================
+   LOWEST AVAILABLE PERSON ID
+========================================================= */
+
+function getNextPersonId() {
+
+  const people =
+    getPeople();
+
+  const used = {};
+
+  people.forEach(function(person) {
+
+    const id =
+      String(
+        person['ID'] || ''
+      ).trim();
+
+    const match =
+      id.match(/^P(\d+)$/i);
+
+    if (match) {
+
+      used[
+        Number(match[1])
+      ] = true;
+
+    }
+
+  });
+
+  let number = 1;
+
+  while (used[number]) {
+    number++;
+  }
+
+  return (
+    'P' +
+    String(number).padStart(3, '0')
+  );
+
+}
+
+
+/* =========================================================
    FIND ROW BY ID
 ========================================================= */
 
-function findCompanyRow(companyId) {
+function findRowById(
+  sheet,
+  id
+) {
 
-  const sheet =
-    getCompaniesSheet();
-
-  const data =
+  const values =
     sheet.getDataRange().getValues();
 
-  if (data.length === 0) {
+  if (values.length < 2) {
     return -1;
   }
 
   const headers =
-    data[0];
+    values[0];
 
   const idIndex =
     headers.indexOf('ID');
@@ -302,20 +408,21 @@ function findCompanyRow(companyId) {
   if (idIndex === -1) {
 
     throw new Error(
-      'ID column not found.'
+      'ID column not found in ' +
+      sheet.getName()
     );
 
   }
 
   for (
     let i = 1;
-    i < data.length;
+    i < values.length;
     i++
   ) {
 
     if (
-      String(data[i][idIndex]) ===
-      String(companyId)
+      String(values[i][idIndex]) ===
+      String(id)
     ) {
 
       return i + 1;
@@ -333,79 +440,23 @@ function findCompanyRow(companyId) {
    ADD COMPANY
 ========================================================= */
 
-function addCompany(
-  company,
-  imageData
-) {
+function addCompany(company) {
 
   const sheet =
     getCompaniesSheet();
 
   const headers =
-    getCompanyHeaders();
+    getHeaders(sheet);
 
   const companyId =
     getNextCompanyId();
 
-
-  /*
-     Photo column stores ONLY contact name.
-     Example:
-     Sandeep M D
-
-     GitHub stores:
-     Sandeep_M_D.jpg
-  */
-
-  let photoValue =
-    String(
-      company['Photo'] || ''
-    ).trim();
-
-
-  /* -------------------------------------------------------
-     UPLOAD NEW VISITING CARD
-  ------------------------------------------------------- */
-
-  if (
-    imageData &&
-    imageData.base64
-  ) {
-
-    const contactName =
-      String(
-        company['Name'] ||
-        company['Company Name'] ||
-        ''
-      ).trim();
-
-
-    uploadVisitingCard(
-      imageData.base64,
-      imageData.mimeType,
-      contactName
-    );
-
-
-    photoValue =
-      contactName;
-
-  }
-
-
-  /* -------------------------------------------------------
-     CREATE ROW
-  ------------------------------------------------------- */
-
   const row =
-    headers.map(header => {
+    headers.map(function(header) {
 
       if (header === 'ID') {
-
         return companyId;
-
       }
-
 
       if (header === 'Favorite') {
 
@@ -416,42 +467,20 @@ function addCompany(
 
       }
 
-
-      if (header === 'Photo') {
-
-        return photoValue;
-
-      }
-
-
-      /*
-         IMPORTANT:
-         Every field is copied directly from
-         the submitted company object.
-      */
-
       return (
-        company[header] !== undefined &&
-        company[header] !== null
-          ? company[header]
-          : ''
+        company[header] ||
+        ''
       );
 
     });
 
-
   sheet.appendRow(row);
-
 
   return {
 
     success: true,
 
-    message:
-      'Company added successfully.',
-
-    id:
-      companyId
+    id: companyId
 
   };
 
@@ -462,16 +491,14 @@ function addCompany(
    UPDATE COMPANY
 ========================================================= */
 
-function updateCompany(
-  company,
-  imageData
-) {
+function updateCompany(company) {
 
   const sheet =
     getCompaniesSheet();
 
   const rowNumber =
-    findCompanyRow(
+    findRowById(
+      sheet,
       company['ID']
     );
 
@@ -483,18 +510,390 @@ function updateCompany(
 
   }
 
-
   const headers =
-    getCompanyHeaders();
+    getHeaders(sheet);
+
+  const row =
+    headers.map(function(header) {
+
+      if (header === 'ID') {
+        return company['ID'];
+      }
+
+      if (header === 'Favorite') {
+
+        return (
+          company['Favorite'] ||
+          'No'
+        );
+
+      }
+
+      return (
+        company[header] ||
+        ''
+      );
+
+    });
+
+  sheet
+    .getRange(
+      rowNumber,
+      1,
+      1,
+      headers.length
+    )
+    .setValues([row]);
+
+  return {
+
+    success: true
+
+  };
+
+}
+
+
+/* =========================================================
+   DELETE COMPANY
+========================================================= */
+
+function deleteCompany(companyId) {
+
+  const companySheet =
+    getCompaniesSheet();
+
+  const peopleSheet =
+    getPeopleSheet();
+
+  const people =
+    getPeople();
+
+  const companyPeople =
+    people.filter(function(person) {
+
+      return String(
+        person['Company ID']
+      ) === String(
+        companyId
+      );
+
+    });
+
+  /*
+     Delete visiting card images
+  */
+
+  companyPeople.forEach(function(person) {
+
+    const photo =
+      String(
+        person['Photo'] || ''
+      ).trim();
+
+    if (photo) {
+
+      try {
+
+        deleteVisitingCard(
+          photo
+        );
+
+      } catch (error) {
+
+        console.log(
+          'Photo deletion failed: ' +
+          error.message
+        );
+
+      }
+
+    }
+
+  });
 
 
   /*
-     Read current row first.
-     This prevents existing information
-     from being accidentally lost.
+     Delete people rows
+     from bottom to top
   */
 
-  const currentRow =
+  const peopleRows = [];
+
+  companyPeople.forEach(function(person) {
+
+    const row =
+      findRowById(
+        peopleSheet,
+        person['ID']
+      );
+
+    if (row !== -1) {
+      peopleRows.push(row);
+    }
+
+  });
+
+  peopleRows
+    .sort(function(a, b) {
+      return b - a;
+    })
+    .forEach(function(row) {
+
+      peopleSheet.deleteRow(row);
+
+    });
+
+
+  /*
+     Delete company
+  */
+
+  const companyRow =
+    findRowById(
+      companySheet,
+      companyId
+    );
+
+  if (companyRow === -1) {
+
+    throw new Error(
+      'Company not found.'
+    );
+
+  }
+
+  companySheet.deleteRow(
+    companyRow
+  );
+
+
+  return {
+
+    success: true
+
+  };
+
+}
+
+
+/* =========================================================
+   TOGGLE FAVORITE
+========================================================= */
+
+function toggleFavorite(companyId) {
+
+  const sheet =
+    getCompaniesSheet();
+
+  const rowNumber =
+    findRowById(
+      sheet,
+      companyId
+    );
+
+  if (rowNumber === -1) {
+
+    throw new Error(
+      'Company not found.'
+    );
+
+  }
+
+  const headers =
+    getHeaders(sheet);
+
+  const favoriteIndex =
+    headers.indexOf(
+      'Favorite'
+    );
+
+  if (favoriteIndex === -1) {
+
+    throw new Error(
+      'Favorite column not found.'
+    );
+
+  }
+
+  const cell =
+    sheet.getRange(
+      rowNumber,
+      favoriteIndex + 1
+    );
+
+  const current =
+    String(
+      cell.getValue() || ''
+    )
+      .trim()
+      .toLowerCase();
+
+  const newValue =
+    current === 'yes'
+      ? 'No'
+      : 'Yes';
+
+  cell.setValue(
+    newValue
+  );
+
+  return {
+
+    success: true,
+
+    favorite:
+      newValue
+
+  };
+
+}
+
+
+/* =========================================================
+   ADD PERSON
+========================================================= */
+
+function addPerson(
+  companyId,
+  person,
+  imageData
+) {
+
+  const company =
+    getCompanies()
+      .find(function(item) {
+
+        return String(
+          item['ID']
+        ) === String(
+          companyId
+        );
+
+      });
+
+  if (!company) {
+
+    throw new Error(
+      'Company not found.'
+    );
+
+  }
+
+  const sheet =
+    getPeopleSheet();
+
+  const headers =
+    getHeaders(sheet);
+
+  const personId =
+    getNextPersonId();
+
+  let photoName = '';
+
+
+  /*
+     Upload visiting card
+  */
+
+  if (
+    imageData &&
+    imageData.base64
+  ) {
+
+    if (
+      !person['Name']
+    ) {
+
+      throw new Error(
+        'Contact name is required for photo upload.'
+      );
+
+    }
+
+    photoName =
+      uploadVisitingCard(
+        imageData.base64,
+        imageData.mimeType,
+        person['Name']
+      );
+
+  }
+
+
+  const row =
+    headers.map(function(header) {
+
+      if (header === 'ID') {
+        return personId;
+      }
+
+      if (
+        header === 'Company ID'
+      ) {
+
+        return companyId;
+
+      }
+
+      if (
+        header === 'Photo'
+      ) {
+
+        return photoName;
+
+      }
+
+      return (
+        person[header] ||
+        ''
+      );
+
+    });
+
+  sheet.appendRow(row);
+
+  return {
+
+    success: true,
+
+    id: personId
+
+  };
+
+}
+
+
+/* =========================================================
+   UPDATE PERSON
+========================================================= */
+
+function updatePerson(
+  person,
+  imageData
+) {
+
+  const sheet =
+    getPeopleSheet();
+
+  const rowNumber =
+    findRowById(
+      sheet,
+      person['ID']
+    );
+
+  if (rowNumber === -1) {
+
+    throw new Error(
+      'Contact not found.'
+    );
+
+  }
+
+  const headers =
+    getHeaders(sheet);
+
+  const oldRow =
     sheet
       .getRange(
         rowNumber,
@@ -504,30 +903,28 @@ function updateCompany(
       )
       .getValues()[0];
 
+  const photoIndex =
+    headers.indexOf(
+      'Photo'
+    );
 
-  const currentCompany = {};
+  let oldPhoto = '';
 
+  if (photoIndex !== -1) {
 
-  headers.forEach(
-    (header, index) => {
+    oldPhoto =
+      String(
+        oldRow[photoIndex] || ''
+      ).trim();
 
-      currentCompany[header] =
-        currentRow[index];
+  }
 
-    }
-  );
-
-
-  let photoValue =
-    String(
-      currentCompany['Photo'] || ''
-    ).trim();
+  let photoName =
+    oldPhoto;
 
 
   /*
-     If a new image is selected,
-     upload it and store ONLY the
-     contact name in Photo column.
+     Upload replacement photo
   */
 
   if (
@@ -535,121 +932,47 @@ function updateCompany(
     imageData.base64
   ) {
 
-    const oldPhoto =
-      photoValue;
-
-
-    const contactName =
-      String(
-        company['Name'] ||
-        company['Company Name'] ||
-        ''
-      ).trim();
-
-
-    uploadVisitingCard(
-      imageData.base64,
-      imageData.mimeType,
-      contactName
-    );
-
-
-    photoValue =
-      contactName;
-
-
-    /*
-       If contact name changed and there was
-       an old visiting card, remove the old one.
-    */
-
     if (
-      oldPhoto &&
-      oldPhoto !== photoValue
+      !person['Name']
     ) {
 
-      try {
-
-        deleteVisitingCard(
-          oldPhoto
-        );
-
-      }
-
-      catch (error) {
-
-        console.log(
-          'Old visiting card deletion failed: ' +
-          error.message
-        );
-
-      }
+      throw new Error(
+        'Contact name is required for photo upload.'
+      );
 
     }
+
+    photoName =
+      uploadVisitingCard(
+        imageData.base64,
+        imageData.mimeType,
+        person['Name']
+      );
 
   }
 
 
-  /*
-     If no new image was selected,
-     keep existing photo.
-  */
-
   const row =
-    headers.map(
-      (header, index) => {
+    headers.map(function(header) {
 
-        if (header === 'ID') {
-
-          return company['ID'];
-
-        }
-
-
-        if (header === 'Photo') {
-
-          return photoValue;
-
-        }
-
-
-        if (header === 'Favorite') {
-
-          return (
-            company['Favorite'] ||
-            currentCompany['Favorite'] ||
-            'No'
-          );
-
-        }
-
-
-        /*
-           IMPORTANT:
-           Only replace with submitted value.
-           Empty values are intentionally allowed.
-        */
-
-        if (
-          company[header] !== undefined &&
-          company[header] !== null
-        ) {
-
-          return company[header];
-
-        }
-
-
-        /*
-           If the field isn't supplied,
-           preserve the existing value.
-        */
-
-        return currentCompany[header] || '';
-
+      if (header === 'ID') {
+        return person['ID'];
       }
-    );
 
+      if (header === 'Company ID') {
+        return person['Company ID'];
+      }
+
+      if (header === 'Photo') {
+        return photoName;
+      }
+
+      return (
+        person[header] ||
+        ''
+      );
+
+    });
 
   sheet
     .getRange(
@@ -661,12 +984,39 @@ function updateCompany(
     .setValues([row]);
 
 
+  /*
+     Remove old image if
+     a replacement was uploaded
+  */
+
+  if (
+    imageData &&
+    imageData.base64 &&
+    oldPhoto &&
+    oldPhoto !== photoName
+  ) {
+
+    try {
+
+      deleteVisitingCard(
+        oldPhoto
+      );
+
+    } catch (error) {
+
+      console.log(
+        'Old photo deletion failed: ' +
+        error.message
+      );
+
+    }
+
+  }
+
+
   return {
 
-    success: true,
-
-    message:
-      'Company updated successfully.'
+    success: true
 
   };
 
@@ -674,33 +1024,32 @@ function updateCompany(
 
 
 /* =========================================================
-   DELETE COMPANY
+   DELETE PERSON
 ========================================================= */
 
-function deleteCompany(
-  companyId
+function deletePerson(
+  personId
 ) {
 
   const sheet =
-    getCompaniesSheet();
+    getPeopleSheet();
 
   const rowNumber =
-    findCompanyRow(
-      companyId
+    findRowById(
+      sheet,
+      personId
     );
 
   if (rowNumber === -1) {
 
     throw new Error(
-      'Company not found.'
+      'Contact not found.'
     );
 
   }
 
-
   const headers =
-    getCompanyHeaders();
-
+    getHeaders(sheet);
 
   const row =
     sheet
@@ -712,139 +1061,46 @@ function deleteCompany(
       )
       .getValues()[0];
 
-
   const photoIndex =
-    headers.indexOf('Photo');
+    headers.indexOf(
+      'Photo'
+    );
 
+  if (photoIndex !== -1) {
 
-  const photoValue =
-    photoIndex >= 0
-      ? String(
-          row[photoIndex] || ''
-        ).trim()
-      : '';
+    const photo =
+      String(
+        row[photoIndex] || ''
+      ).trim();
 
+    if (photo) {
 
-  /*
-     Delete spreadsheet row first.
-  */
+      try {
+
+        deleteVisitingCard(
+          photo
+        );
+
+      } catch (error) {
+
+        console.log(
+          'Photo deletion failed: ' +
+          error.message
+        );
+
+      }
+
+    }
+
+  }
 
   sheet.deleteRow(
     rowNumber
   );
 
-
-  /*
-     Delete GitHub visiting card.
-  */
-
-  if (photoValue) {
-
-    try {
-
-      deleteVisitingCard(
-        photoValue
-      );
-
-    }
-
-    catch (error) {
-
-      console.log(
-        'Photo deletion failed: ' +
-        error.message
-      );
-
-    }
-
-  }
-
-
   return {
 
-    success: true,
-
-    message:
-      'Company deleted successfully.'
-
-  };
-
-}
-
-
-/* =========================================================
-   TOGGLE FAVORITE
-========================================================= */
-
-function toggleFavorite(
-  companyId
-) {
-
-  const sheet =
-    getCompaniesSheet();
-
-  const rowNumber =
-    findCompanyRow(
-      companyId
-    );
-
-  if (rowNumber === -1) {
-
-    throw new Error(
-      'Company not found.'
-    );
-
-  }
-
-
-  const headers =
-    getCompanyHeaders();
-
-  const favoriteIndex =
-    headers.indexOf(
-      'Favorite'
-    );
-
-
-  if (favoriteIndex === -1) {
-
-    throw new Error(
-      'Favorite column not found.'
-    );
-
-  }
-
-
-  const cell =
-    sheet.getRange(
-      rowNumber,
-      favoriteIndex + 1
-    );
-
-
-  const current =
-    String(
-      cell.getValue()
-    ).toLowerCase();
-
-
-  const newValue =
-    current === 'yes'
-      ? 'No'
-      : 'Yes';
-
-
-  cell.setValue(
-    newValue
-  );
-
-
-  return {
-
-    success: true,
-
-    favorite:
-      newValue
+    success: true
 
   };
 

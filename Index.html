@@ -24,53 +24,70 @@
      HEADER
 ===================================================== -->
 
-<div class="header">
+<header class="header">
 
   <div class="logo">
-    👥 Personal CRM
+    👥 <span>Personal CRM</span>
   </div>
 
 
   <div class="header-actions">
 
-    <input
-      id="searchInput"
-      class="search-box"
-      type="text"
-      placeholder="🔍 Search companies or people..."
-      oninput="renderCompanies()"
-    >
+    <div class="search-wrap">
+
+      <span class="search-icon">
+        🔍
+      </span>
+
+      <input
+        id="searchInput"
+        class="search-box"
+        type="text"
+        placeholder="Search companies or people..."
+      >
+
+      <button
+        id="clearSearch"
+        class="clear-search"
+        type="button"
+      >
+        ×
+      </button>
+
+    </div>
 
 
     <button
+      id="addCompanyButton"
       class="add-btn"
-      onclick="openAddModal()"
+      type="button"
     >
       + Add Company
     </button>
 
   </div>
 
-</div>
+</header>
 
 
 <!-- =====================================================
      MAIN
 ===================================================== -->
 
-<div class="container">
+<main class="container">
 
-  <div class="toolbar">
+
+  <div class="page-header">
 
     <div>
 
-      <div class="title">
+      <h1>
         Companies
-      </div>
+      </h1>
 
       <div
-        class="count"
         id="companyCount"
+        class="count"
       >
         Loading...
       </div>
@@ -80,6 +97,10 @@
   </div>
 
 
+  <!-- ===================================================
+       COMPANY TABLE
+  ==================================================== -->
+
   <div class="table-wrap">
 
     <table>
@@ -88,140 +109,82 @@
 
         <tr>
 
-          <th
-            class="sortable favorite-heading"
-            onclick="sortCompanies('Favorite')"
-            title="Sort by Favorite"
-          >
+          <th class="star-column">
             ★
-            <span
-              id="sort-Favorite"
-              class="sort-arrow"
-            ></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('Company Name')"
+            data-sort="Company Name"
           >
             Company Name
-            <span
-              id="sort-CompanyName"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-CompanyName"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('Company Type')"
+            data-sort="Company Type"
           >
             Type
-            <span
-              id="sort-CompanyType"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-CompanyType"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('Industry')"
+            data-sort="Industry"
           >
             Industry
-            <span
-              id="sort-Industry"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-Industry"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('Area')"
+            data-sort="Area"
           >
             Area
-            <span
-              id="sort-Area"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-Area"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('City')"
+            data-sort="City"
           >
             City
-            <span
-              id="sort-City"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-City"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('State')"
+            data-sort="State"
           >
             State
-            <span
-              id="sort-State"
-              class="sort-arrow"
-            ></span>
+            <span id="sort-State"></span>
           </th>
 
 
           <th
             class="sortable"
-            onclick="sortCompanies('Name')"
+            data-sort="Contacts"
           >
-            Contact
-            <span
-              id="sort-Name"
-              class="sort-arrow"
-            ></span>
+            Contacts
+            <span id="sort-Contacts"></span>
           </th>
 
 
-          <th
-            class="sortable"
-            onclick="sortCompanies('Designation')"
-          >
-            Designation
-            <span
-              id="sort-Designation"
-              class="sort-arrow"
-            ></span>
+          <th>
+            Website
           </th>
 
 
-          <th
-            class="sortable"
-            onclick="sortCompanies('Phone')"
-          >
-            Phone
-            <span
-              id="sort-Phone"
-              class="sort-arrow"
-            ></span>
+          <th class="action-column">
+            Actions
           </th>
-
-
-          <th
-            class="sortable"
-            onclick="sortCompanies('Email')"
-          >
-            Email
-            <span
-              id="sort-Email"
-              class="sort-arrow"
-            ></span>
-          </th>
-
-
-          <th class="action-heading"></th>
 
         </tr>
 
@@ -233,7 +196,7 @@
         <tr>
 
           <td
-            colspan="12"
+            colspan="10"
             class="loading"
           >
             Loading companies...
@@ -247,24 +210,162 @@
 
   </div>
 
+</main>
+
+
+<!-- =====================================================
+     COMPANY DETAILS MODAL
+===================================================== -->
+
+<div
+  id="companyModal"
+  class="modal-bg"
+>
+
+  <div class="modal company-modal">
+
+    <div class="modal-header">
+
+      <div>
+
+        <div
+          id="companyDetailsName"
+          class="modal-title"
+        ></div>
+
+        <div
+          id="companyDetailsSubtitle"
+          class="modal-subtitle"
+        ></div>
+
+      </div>
+
+
+      <div class="modal-header-actions">
+
+        <button
+          id="companyFavoriteButton"
+          class="favorite-modal"
+          type="button"
+          title="Favorite"
+        >
+          ☆
+        </button>
+
+        <button
+          id="companyEditButton"
+          class="icon-button"
+          type="button"
+          title="Edit company"
+        >
+          ✏️
+        </button>
+
+        <button
+          id="companyCloseButton"
+          class="close"
+          type="button"
+        >
+          ✕
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="companyDetailsContent"
+    ></div>
+
+
+    <div class="section-header">
+
+      <h2>
+        Contacts
+        <span
+          id="contactCount"
+          class="section-count"
+        >
+          (0)
+        </span>
+      </h2>
+
+
+      <button
+        id="addPersonButton"
+        class="small-add-btn"
+        type="button"
+      >
+        + Add Contact
+      </button>
+
+    </div>
+
+
+    <div
+      id="companyContacts"
+      class="people-grid"
+    ></div>
+
+  </div>
+
 </div>
 
 
 <!-- =====================================================
-     ADD / EDIT MODAL
+     PERSON DETAILS MODAL
 ===================================================== -->
 
 <div
-  id="formModal"
+  id="personDetailsModal"
   class="modal-bg"
 >
 
-  <div class="modal">
+  <div class="modal person-details-modal">
+
+    <div class="modal-header">
+
+      <div class="modal-title">
+        Contact Details
+      </div>
+
+
+      <button
+        id="personDetailsCloseButton"
+        class="close"
+        type="button"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <div
+      id="personDetailsContent"
+    ></div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     COMPANY FORM MODAL
+===================================================== -->
+
+<div
+  id="companyFormModal"
+  class="modal-bg"
+>
+
+  <div class="modal form-modal">
 
     <div class="modal-header">
 
       <div
-        id="formTitle"
+        id="companyFormTitle"
         class="modal-title"
       >
         Add Company
@@ -272,8 +373,9 @@
 
 
       <button
+        id="companyFormCloseButton"
         class="close"
-        onclick="closeFormModal()"
+        type="button"
       >
         ✕
       </button>
@@ -286,7 +388,9 @@
 
       <div class="field full">
 
-        <label>Company Name *</label>
+        <label>
+          Company Name *
+        </label>
 
         <input
           id="fCompanyName"
@@ -298,7 +402,9 @@
 
       <div class="field">
 
-        <label>Company Type</label>
+        <label>
+          Company Type
+        </label>
 
         <select
           id="fCompanyType"
@@ -309,7 +415,9 @@
 
       <div class="field">
 
-        <label>Industry</label>
+        <label>
+          Industry
+        </label>
 
         <select
           id="fIndustry"
@@ -320,7 +428,9 @@
 
       <div class="field">
 
-        <label>Area</label>
+        <label>
+          Area
+        </label>
 
         <select
           id="fArea"
@@ -331,7 +441,9 @@
 
       <div class="field">
 
-        <label>City</label>
+        <label>
+          City
+        </label>
 
         <select
           id="fCity"
@@ -342,7 +454,9 @@
 
       <div class="field">
 
-        <label>State</label>
+        <label>
+          State
+        </label>
 
         <select
           id="fState"
@@ -351,13 +465,16 @@
       </div>
 
 
-      <div class="field">
+      <div class="field full">
 
-        <label>Website</label>
+        <label>
+          Website
+        </label>
 
         <input
           id="fWebsite"
           type="text"
+          placeholder="example.com"
         >
 
       </div>
@@ -365,53 +482,9 @@
 
       <div class="field">
 
-        <label>Contact Name</label>
-
-        <input
-          id="fName"
-          type="text"
-        >
-
-      </div>
-
-
-      <div class="field">
-
-        <label>Designation</label>
-
-        <select
-          id="fDesignation"
-        ></select>
-
-      </div>
-
-
-      <div class="field">
-
-        <label>Phone</label>
-
-        <input
-          id="fPhone"
-          type="text"
-        >
-
-      </div>
-
-
-      <div class="field">
-
-        <label>Email</label>
-
-        <input
-          id="fEmail"
-          type="email"
-        >
-
-      </div>
-
-      <div class="field">
-
-        <label>Favorite</label>
+        <label>
+          Favorite
+        </label>
 
         <select id="fFavorite">
 
@@ -428,29 +501,107 @@
       </div>
 
 
-      <div class="field full">
-
-        <label>
-          Visiting Card
-        </label>
-
-        <input
-          id="fPhoto"
-          type="file"
-          accept="image/*"
-          onchange="previewPhoto()"
-        >
+    </div>
 
 
-        <img
-          id="photoPreview"
-          class="photo-preview"
-          style="display:none;"
-          alt="Visiting Card Preview"
-        >
+    <!-- =================================================
+         FIRST CONTACT
+    ================================================== -->
+
+    <div
+      id="firstContactSection"
+      class="first-contact-section"
+    >
+
+      <div class="section-header">
+
+        <h2>
+          First Contact
+        </h2>
 
       </div>
 
+
+      <div class="form-grid">
+
+
+        <div class="field">
+
+          <label>
+            Contact Name
+          </label>
+
+          <input
+            id="fFirstName"
+            type="text"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Designation
+          </label>
+
+          <select
+            id="fFirstDesignation"
+          ></select>
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Phone
+          </label>
+
+          <input
+            id="fFirstPhone"
+            type="text"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Email
+          </label>
+
+          <input
+            id="fFirstEmail"
+            type="email"
+          >
+
+        </div>
+
+
+        <div class="field full">
+
+          <label>
+            Visiting Card
+          </label>
+
+          <input
+            id="fFirstPhoto"
+            type="file"
+            accept="image/*"
+          >
+
+          <img
+            id="firstPhotoPreview"
+            class="photo-preview"
+            alt=""
+          >
+
+        </div>
+
+
+      </div>
 
     </div>
 
@@ -458,16 +609,18 @@
     <div class="modal-actions">
 
       <button
+        id="companyCancelButton"
         class="cancel-btn"
-        onclick="closeFormModal()"
+        type="button"
       >
         Cancel
       </button>
 
 
       <button
+        id="companySaveButton"
         class="save-btn"
-        onclick="saveCompany()"
+        type="button"
       >
         Save
       </button>
@@ -480,26 +633,30 @@
 
 
 <!-- =====================================================
-     CONTACT DETAILS MODAL
+     PERSON FORM MODAL
 ===================================================== -->
 
 <div
-  id="contactModal"
+  id="personFormModal"
   class="modal-bg"
 >
 
-  <div class="modal contact-modal">
+  <div class="modal form-modal">
 
     <div class="modal-header">
 
-      <div class="modal-title">
-        Contact Details
+      <div
+        id="personFormTitle"
+        class="modal-title"
+      >
+        Add Contact
       </div>
 
 
       <button
+        id="personFormCloseButton"
         class="close"
-        onclick="closeContactModal()"
+        type="button"
       >
         ✕
       </button>
@@ -507,15 +664,125 @@
     </div>
 
 
-    <div id="contactContent"></div>
+    <div class="form-grid">
+
+
+      <div class="field full">
+
+        <label>
+          Contact Name *
+        </label>
+
+        <input
+          id="pName"
+          type="text"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Designation
+        </label>
+
+        <select
+          id="pDesignation"
+        ></select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Phone
+        </label>
+
+        <input
+          id="pPhone"
+          type="text"
+        >
+
+      </div>
+
+
+      <div class="field full">
+
+        <label>
+          Email
+        </label>
+
+        <input
+          id="pEmail"
+          type="email"
+        >
+
+      </div>
+
+
+      <div class="field full">
+
+        <label>
+          Visiting Card
+        </label>
+
+        <input
+          id="pPhoto"
+          type="file"
+          accept="image/*"
+        >
+
+        <img
+          id="personPhotoPreview"
+          class="photo-preview"
+          alt=""
+        >
+
+      </div>
+
+
+    </div>
+
+
+    <div class="modal-actions">
+
+      <button
+        id="personCancelButton"
+        class="cancel-btn"
+        type="button"
+      >
+        Cancel
+      </button>
+
+
+      <button
+        id="personSaveButton"
+        class="save-btn"
+        type="button"
+      >
+        Save
+      </button>
+
+    </div>
 
   </div>
 
 </div>
 
 
-<?!= include('JS'); ?>
+<!-- =====================================================
+     TOAST
+===================================================== -->
 
+<div
+  id="toast"
+  class="toast"
+></div>
+
+
+<?!= include('JS'); ?>
 
 </body>
 
